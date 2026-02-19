@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 
-/// Common mesh-style green/black background used for all auth screens.
+/// Common background used for all auth screens, supports light and dark mode.
 class AuthBackground extends StatelessWidget {
   const AuthBackground({super.key, required this.child});
 
@@ -8,19 +9,13 @@ class AuthBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final decoration = brightness == Brightness.dark
+        ? AppTheme.getDarkBackgroundDecoration()
+        : AppTheme.getLightBackgroundDecoration();
+
     return Container(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(-0.6, -0.8),
-          radius: 1.4,
-          colors: [
-            Color(0xFF0D2614),
-            Color(0xFF004D40),
-            Color(0xFF00100A),
-          ],
-          stops: [0.0, 0.6, 1.0],
-        ),
-      ),
+      decoration: decoration,
       child: child,
     );
   }

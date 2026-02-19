@@ -39,6 +39,13 @@ dependencies:
   table_calendar: ^3.1.2
   camera: ^0.11.0+2
   google_mlkit_pose_detection: ^0.14.1
+  image_picker: ^1.2.1
+  percent_indicator: ^4.2.5
+  shared_preferences: ^2.5.4
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.5
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

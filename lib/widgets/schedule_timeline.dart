@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 
 class ScheduleItem {
   ScheduleItem({
@@ -29,12 +30,17 @@ class ScheduleTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: false,
+      physics: const BouncingScrollPhysics(),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return _ScheduleRow(item: item, onStartTap: onStartTap);
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index < items.length - 1 ? 20 : 0,
+          ),
+          child: _ScheduleRow(item: item, onStartTap: onStartTap),
+        );
       },
     );
   }
@@ -71,11 +77,14 @@ class _ScheduleRow extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              Expanded(
-                child: CustomPaint(
-                  painter: _DashedLinePainter(),
-                ),
-              ),
+              if (!item.isLast)
+                Expanded(
+                  child: CustomPaint(
+                    painter: _DashedLinePainter(),
+                  ),
+                )
+              else
+                const SizedBox(height: 82),
             ],
           ),
           const SizedBox(width: 16),
@@ -103,7 +112,7 @@ class _ScheduleRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           _StartButton(
             onTap: () => onStartTap(item),
           ),
@@ -120,31 +129,57 @@ class _StartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF59D),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
-              'Start',
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFF59D).withOpacity(0.9),
+                  const Color(0xFFFFF59D).withOpacity(0.7),
+                ],
               ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFF59D).withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
-            SizedBox(width: 4),
-            Icon(
-              Icons.play_arrow_rounded,
-              size: 18,
-              color: Colors.black87,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(
+                  'Start',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(
+                  Icons.play_arrow_rounded,
+                  size: 16,
+                  color: Colors.black87,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

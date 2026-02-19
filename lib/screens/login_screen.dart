@@ -34,11 +34,13 @@ class LoginScreen extends StatelessWidget {
                 ),
               );
             },
-            child: const Text(
+            child: Text(
               'Forgot Password?',
               style: TextStyle(
-                color: Colors.white,
+                color: Colors.white.withOpacity(0.8),
                 decoration: TextDecoration.underline,
+                fontSize: 13,
+                letterSpacing: -0.2,
               ),
             ),
           ),
@@ -60,9 +62,12 @@ class LoginScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Don’t have an account? ",
-              style: TextStyle(color: Colors.white70),
+            Text(
+              "Don't have an account? ",
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                letterSpacing: -0.2,
+              ),
             ),
             GestureDetector(
               onTap: () {
@@ -78,6 +83,7 @@ class LoginScreen extends StatelessWidget {
                 style: TextStyle(
                   color: kLimeAccent,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),
@@ -87,4 +93,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-
