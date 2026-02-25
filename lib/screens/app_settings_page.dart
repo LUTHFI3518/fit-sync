@@ -67,7 +67,7 @@ class AppSettingsPage extends StatelessWidget {
               title: 'Apple Health',
               trailing: Switch(
                 value: ctrl.appleHealthEnabled,
-                activeColor: Colors.black,
+                activeThumbColor: Colors.black,
                 activeTrackColor: const Color(0xFFCCFF00),
                 inactiveThumbColor: Colors.white,
                 inactiveTrackColor: Colors.white24,
@@ -79,7 +79,7 @@ class AppSettingsPage extends StatelessWidget {
               title: 'Dark Mode',
               trailing: Switch(
                 value: ctrl.darkModeEnabled,
-                activeColor: Colors.black,
+                activeThumbColor: Colors.black,
                 activeTrackColor: const Color(0xFFCCFF00),
                 inactiveThumbColor: Colors.white,
                 inactiveTrackColor: Colors.white24,
@@ -215,7 +215,7 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
-    final subtitleColor = isDark ? Colors.white.withOpacity(0.6) : const Color(0xFF6A6A6A);
+    final subtitleColor = isDark ? Colors.white.withValues(alpha: 0.6) : const Color(0xFF6A6A6A);
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

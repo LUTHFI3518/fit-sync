@@ -1,3 +1,4 @@
+//main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,9 +19,7 @@ class FitSyncApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => ThemeController()..initialize(),
-        ),
+        ChangeNotifierProvider(create: (_) => ThemeController()..initialize()),
         ChangeNotifierProvider(
           create: (_) => OnboardingController()..initialize(),
         ),
@@ -32,7 +31,9 @@ class FitSyncApp extends StatelessWidget {
         builder: (context, themeController, onboardingController, _) {
           // Sync theme with onboarding controller
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            themeController.syncWithOnboarding(onboardingController.darkModeEnabled);
+            themeController.syncWithOnboarding(
+              onboardingController.darkModeEnabled,
+            );
           });
 
           return MaterialApp(
@@ -41,9 +42,9 @@ class FitSyncApp extends StatelessWidget {
             theme: themeController.currentTheme,
             builder: (context, child) {
               return MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: const TextScaler.linear(1.0),
-                ),
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: const TextScaler.linear(1.0)),
                 child: child!,
               );
             },
@@ -54,4 +55,3 @@ class FitSyncApp extends StatelessWidget {
     );
   }
 }
-

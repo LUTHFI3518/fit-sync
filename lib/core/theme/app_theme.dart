@@ -45,11 +45,11 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withOpacity(0.8),
+        fillColor: Colors.white.withValues(alpha: 0.8),
         hintStyle: const TextStyle(color: Color(0xFF9A9A9A)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: Colors.black.withOpacity(0.1)),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(30)),
@@ -108,11 +108,11 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.35),
+        fillColor: Colors.black.withValues(alpha: 0.35),
         hintStyle: const TextStyle(color: Colors.white54),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(30)),
@@ -165,8 +165,8 @@ class AppTheme {
   static Color getTextColor(BuildContext context, {double opacity = 1.0}) {
     final brightness = Theme.of(context).brightness;
     return brightness == Brightness.dark
-        ? Colors.white.withOpacity(opacity)
-        : const Color(0xFF1A1A1A).withOpacity(opacity);
+        ? Colors.white.withValues(alpha: opacity)
+        : const Color(0xFF1A1A1A).withValues(alpha: opacity);
   }
 
   // Get background color based on theme
