@@ -68,10 +68,7 @@ class GlassContainer extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: container,
-      );
+      return GestureDetector(onTap: onTap, child: container);
     }
 
     return container;
@@ -96,7 +93,8 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassContainer(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       margin: margin,
       borderRadius: BorderRadius.circular(20),
       blur: 15.0,
@@ -124,7 +122,8 @@ class GlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassContainer(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       borderRadius: BorderRadius.circular(28),
       blur: 15.0,
       opacity: 0.2,

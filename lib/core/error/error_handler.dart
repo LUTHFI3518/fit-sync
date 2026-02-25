@@ -32,10 +32,7 @@ class ErrorHandler {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF141623),
-        title: const Text(
-          'Error',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Error', style: TextStyle(color: Colors.white)),
         content: Text(
           error.message,
           style: const TextStyle(color: Colors.white70),

@@ -28,8 +28,10 @@ class FoodTrackerPage extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: _MealList(date: selectedDay),
               ),
             ),
@@ -56,10 +58,7 @@ class _CalendarHeader extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF004D40),
-            Color(0xFF1B5E20),
-          ],
+          colors: [Color(0xFF004D40), Color(0xFF1B5E20)],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
@@ -183,8 +182,7 @@ class _MealList extends StatelessWidget {
             );
           },
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: item.color,
               borderRadius: BorderRadius.circular(18),
@@ -250,4 +248,3 @@ class _MealCardData {
   final String timeLabel;
   final Color color;
 }
-

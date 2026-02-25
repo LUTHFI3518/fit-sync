@@ -34,14 +34,8 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: Color(0xFF1A1A1A),
         ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: Color(0xFF4A4A4A),
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: Color(0xFF6A6A6A),
-        ),
+        bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF4A4A4A)),
+        bodySmall: TextStyle(fontSize: 12, color: Color(0xFF6A6A6A)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -59,9 +53,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -97,14 +89,8 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: Colors.white70,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: Colors.white60,
-        ),
+        bodyMedium: TextStyle(fontSize: 14, color: Colors.white70),
+        bodySmall: TextStyle(fontSize: 12, color: Colors.white60),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -122,9 +108,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: const Color(0xFF1A1A1A),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -135,11 +119,7 @@ class AppTheme {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFF8F9FA),
-          Color(0xFFE9ECEF),
-          Color(0xFFDEE2E6),
-        ],
+        colors: [Color(0xFFF8F9FA), Color(0xFFE9ECEF), Color(0xFFDEE2E6)],
         stops: [0.0, 0.5, 1.0],
       ),
     );
@@ -151,11 +131,7 @@ class AppTheme {
       gradient: RadialGradient(
         center: Alignment(-0.6, -0.8),
         radius: 1.4,
-        colors: [
-          Color(0xFF0D2614),
-          Color(0xFF004D40),
-          Color(0xFF00100A),
-        ],
+        colors: [Color(0xFF0D2614), Color(0xFF004D40), Color(0xFF00100A)],
         stops: [0.0, 0.6, 1.0],
       ),
     );

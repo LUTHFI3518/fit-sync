@@ -80,7 +80,8 @@ class OnboardingController extends ChangeNotifier {
     avatarPath = _storage!.getAvatarPath();
     useMetricWeight = _storage!.getUseMetricWeight() ?? useMetricWeight;
     useMetricHeight = _storage!.getUseMetricHeight() ?? useMetricHeight;
-    appleHealthEnabled = _storage!.getAppleHealthEnabled() ?? appleHealthEnabled;
+    appleHealthEnabled =
+        _storage!.getAppleHealthEnabled() ?? appleHealthEnabled;
     darkModeEnabled = _storage!.getDarkModeEnabled() ?? darkModeEnabled;
     languageCode = _storage!.getLanguageCode() ?? languageCode;
   }
@@ -108,7 +109,9 @@ class OnboardingController extends ChangeNotifier {
       );
     } catch (e) {
       ErrorHandler.logError(e);
-      throw StorageException('Failed to save user data: ${ErrorHandler.getErrorMessage(e)}');
+      throw StorageException(
+        'Failed to save user data: ${ErrorHandler.getErrorMessage(e)}',
+      );
     }
   }
 
@@ -167,11 +170,7 @@ class OnboardingController extends ChangeNotifier {
     await _saveToStorage();
   }
 
-  void setHealth({
-    bool? backPain,
-    bool? kneePain,
-    bool? heartIssue,
-  }) {
+  void setHealth({bool? backPain, bool? kneePain, bool? heartIssue}) {
     hasBackPain = backPain ?? hasBackPain;
     hasKneePain = kneePain ?? hasKneePain;
     hasHeartIssue = heartIssue ?? hasHeartIssue;
