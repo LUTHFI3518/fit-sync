@@ -1,3 +1,4 @@
+// register_screen.dart
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
@@ -6,6 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import '../widgets/auth_widgets.dart';
 import 'login_screen.dart';
 import 'register_details_screen.dart';
+import '../state/onboarding_controller.dart';
+import '../widgets/auth_widgets.dart';
+import 'login_screen.dart';
+import 'onboarding_splash_screen.dart';
+import '../state/auth_controller.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -100,7 +106,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     setState(() => _error = null);
+    final ctrl = context.read<OnboardingController>();
+    final auth = context.read<AuthController>();
+    await auth.register(email, password, name);
 
+    if (auth.isAuthenticated) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OnboardingSplashScreen()),
+      );
+    }
+    await ctrl.setDisplayName(name);
+    await ctrl.setAge(_age);
+    await ctrl.setWeight(_weight);
+    await ctrl.setHeight(_height);
+    await ctrl.setGender(_gender!);
+    await ctrl.setGoal(_goal!);
+    if (!_useMetricWeight) await ctrl.toggleWeightUnit();
+    if (!_useMetricHeight) await ctrl.toggleHeightUnit();
+
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
