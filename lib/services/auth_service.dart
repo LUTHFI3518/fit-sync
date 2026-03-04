@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = "http://192.168.1.71:5000/api/auth";
+  static const String baseUrl =
+      "https://fit-sync-backend-cvhb.onrender.com/api/auth";
 
   Future<Map<String, dynamic>> register({
     required String email,

@@ -45,6 +45,9 @@ class _HomeShellState extends State<HomeShell> with TickerProviderStateMixin {
   // ── Tab state
   int _tabIndex = 0;
 
+  /// True once we've received the first successful journey response
+  bool _hasLoaded = false;
+
   List<JourneyDay> _days = [];
   late final ScrollController _scroll;
   late final AnimationController _pulseCtrl;
@@ -244,8 +247,13 @@ class _HomeShellState extends State<HomeShell> with TickerProviderStateMixin {
     final name = profileData?['name'] ?? 'User';
     final workoutCtrl = context.watch<WorkoutController>();
 
-    if (workoutCtrl.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    // Only block render on the FIRST load. Background refreshes keep the
+    // existing journey visible so the ScrollController position is preserved.
+    if (!_hasLoaded) {
+      if (workoutCtrl.isLoading) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      _hasLoaded = true;
     }
 
     _buildDaysFromBackend(workoutCtrl);
@@ -1408,9 +1416,14 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
       try {
         exercises = jsonDecode(exStr);
       } catch (e) {
-        // Fallback or leave empty
+        // leave empty
       }
     }
+
+    final doneIds = ctrl.completedExerciseIds;
+    final doneCount = exercises
+        .where((e) => doneIds.contains(e['\$id']))
+        .length;
 
     return SafeArea(
       top: false,
@@ -1465,11 +1478,33 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Today\'s Plan',
-                          style: TextStyle(color: Colors.white60, fontSize: 13),
-                        ),
-                        const SizedBox(height: 4),
+                        // Progress pill
+                        if (exercises.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: doneCount == exercises.length
+                                  ? const Color(
+                                      0xFF2EA043,
+                                    ).withValues(alpha: 0.9)
+                                  : Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              doneCount == exercises.length
+                                  ? '✅ All done!'
+                                  : '$doneCount / ${exercises.length} done',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 12),
 
                         if (ctrl.isLoading)
                           const Padding(
@@ -1488,25 +1523,40 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
                           )
                         else
                           ...exercises.map((ex) {
+                            final exerciseId = ex['\$id'] as String? ?? '';
+                            final isDone = doneIds.contains(exerciseId);
+
+                            // Detail label: timed vs reps
+                            final targetReps = ex['targetReps'] ?? 0;
+                            final avgSecs = ex['avgRepSeconds'] ?? 0;
+
+                            final String detail;
+                            if (targetReps == 0) {
+                              detail = '$avgSecs}s hold';
+                            } else {
+                              detail = '$targetReps reps';
+                            }
+
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: _SheetWorkoutRow(
-                                icon:
-                                    '💪', // Placeholder, map logic based on body part if needed
+                                icon: isDone ? '✅' : _iconFor(ex['name']),
                                 label: ex['name'] ?? 'Exercise',
-                                detail:
-                                    '${ex['sets'] ?? 3} sets × ${ex['reps'] ?? 10}',
-                                onStart: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => WorkoutCameraPage(
-                                        exerciseName: "pushups",
-                                        targetReps: 15,
-                                      ),
-                                    ),
-                                  );
-                                },
+                                detail: isDone ? 'Completed!' : detail,
+                                isDone: isDone,
+                                onStart: isDone
+                                    ? null
+                                    : () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => WorkoutCameraPage(
+                                              exercise:
+                                                  Map<String, dynamic>.from(ex),
+                                            ),
+                                          ),
+                                        );
+                                      },
                               ),
                             );
                           }),
@@ -1521,6 +1571,19 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
       ),
     );
   }
+
+  String _iconFor(String? name) {
+    if (name == null) return '💪';
+    final n = name.toLowerCase();
+    if (n.contains('push')) return '💪';
+    if (n.contains('squat') || n.contains('lunge')) return '🦵';
+    if (n.contains('wall')) return '🦵';
+    if (n.contains('shoulder')) return '👀';
+    if (n.contains('stretch') || n.contains('cat') || n.contains('knee')) {
+      return '🧘';
+    }
+    return '💪';
+  }
 }
 
 class _SheetWorkoutRow extends StatelessWidget {
@@ -1528,12 +1591,14 @@ class _SheetWorkoutRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.detail,
-    required this.onStart,
+    this.isDone = false,
+    this.onStart,
   });
   final String icon;
   final String label;
   final String detail;
-  final VoidCallback onStart;
+  final bool isDone;
+  final VoidCallback? onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -1587,30 +1652,35 @@ class _SheetWorkoutRow extends StatelessWidget {
               ],
             ),
           ),
-          // Individual Start button
+          // Start / Done button
           GestureDetector(
             onTap: onStart,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFCCFF00), Color(0xFF8BC800)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: isDone
+                    ? null
+                    : const LinearGradient(
+                        colors: [Color(0xFFCCFF00), Color(0xFF8BC800)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: isDone ? Colors.white.withValues(alpha: 0.12) : null,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFCCFF00).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                boxShadow: isDone
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: const Color(0xFFCCFF00).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
-              child: const Text(
-                'Start',
+              child: Text(
+                isDone ? 'Done' : 'Start',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: isDone ? Colors.white38 : Colors.black,
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
                 ),
