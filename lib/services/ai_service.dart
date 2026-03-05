@@ -4,7 +4,8 @@ import 'package:http/http.dart' as http;
 import '../core/storage/storage_service.dart';
 
 class AiService {
-  static const String baseUrl = "http://192.168.1.71:5000/api/ai";
+  static const String baseUrl =
+      "https://fit-sync-backend-cvhb.onrender.com/api/ai";
 
   Future<Map<String, String>> _headers() async {
     final storage = await StorageService.getInstance();
