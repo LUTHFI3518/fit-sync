@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/workout_service.dart';
 
@@ -54,7 +55,7 @@ class WorkoutController extends ChangeNotifier {
         try {
           final List<dynamic> done = List.from(
             (data['completedExercises'] is String)
-                ? [] // will parse below
+                ? jsonDecode(data['completedExercises'])
                 : data['completedExercises'],
           );
           completedExerciseIds = done
@@ -96,6 +97,22 @@ class WorkoutController extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchExerciseInfo(String name) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+      
+      final data = await _service.getExerciseInfo(name);
+      return data;
+    } catch (e) {
+      _error = e.toString();
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

@@ -2,11 +2,11 @@ import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
-class PushUpLogic extends BaseExercise {
+class OneArmTricepDipsLogic extends BaseExercise {
   bool _isDown = false;
 
-  PushUpLogic(super.targetReps) {
-    feedback = "Get into pushup position";
+  OneArmTricepDipsLogic(super.targetReps) {
+    feedback = "One Arm Tricep Dips";
   }
 
   @override
@@ -14,8 +14,6 @@ class PushUpLogic extends BaseExercise {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
     final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
     final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
-    final lHip = pose.landmarks[PoseLandmarkType.leftHip];
-    final lAnkle = pose.landmarks[PoseLandmarkType.leftAnkle];
 
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
     final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
@@ -23,19 +21,10 @@ class PushUpLogic extends BaseExercise {
 
     final leftOk = _conf(lShoulder, lElbow, lWrist);
     final rightOk = _conf(rShoulder, rElbow, rWrist);
-    final backOk = _conf(lShoulder, lHip, lAnkle);
 
     if (!leftOk && !rightOk) {
-      feedback = "Make sure your full body is in frame";
+      feedback = "Upper body not visible";
       return;
-    }
-
-    if (backOk) {
-      final backAngle = _angle(lShoulder!, lHip!, lAnkle!);
-      if (backAngle < 150) {
-        feedback = "Keep your back straight!";
-        return;
-      }
     }
 
     double angle = 0;
@@ -47,22 +36,23 @@ class PushUpLogic extends BaseExercise {
       angle = _angle(rShoulder!, rElbow!, rWrist!);
     }
 
-    if (!_isDown && angle > 155) {
-      feedback = "Go down \u2193";
+    if (!_isDown && angle > 150) {
+      feedback = "Pull \u2191";
     }
 
-    if (angle < 85) {
+    if (angle < 90) {
       if (!_isDown) {
         _isDown = true;
-        feedback = "Push up \u2191";
+        feedback = "Release \u2193";
       }
     }
 
-    if (_isDown && angle > 155) {
+    if (_isDown && angle > 150) {
       reps++;
       _isDown = false;
-      feedback = "Great! Rep $reps \ud83d\udcaa";
+      feedback = "Rep $reps \ud83d\udcaa";
     }
+
   }
 
   bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>

@@ -12,7 +12,7 @@ import 'ai_agent_page.dart';
 import 'settings_page.dart';
 import 'statistics_page.dart';
 import 'profile_page.dart';
-import '../workout/camera/workout_camera_page.dart';
+import '../workout/camera/exercise_preview_page.dart';
 
 // ─────────────────────────────────────────────
 //  Data model for a single journey day
@@ -1513,6 +1513,32 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
                               color: Color(0xFFCCFF00),
                             ),
                           )
+                        else if (ctrl.error != null)
+                          Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Text(
+                              ctrl.error!,
+                              style: const TextStyle(
+                                color: Color(0xFFFF5252),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                        else if (ctrl.todayWorkout != null && ctrl.todayWorkout!['restDay'] == true)
+                          const Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: Text(
+                              'Today is a rest day! 🎉',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          )
                         else if (exercises.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(32.0),
@@ -1532,7 +1558,7 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
 
                             final String detail;
                             if (targetReps == 0) {
-                              detail = '$avgSecs}s hold';
+                              detail = '$avgSecs sec hold';
                             } else {
                               detail = '$targetReps reps';
                             }
@@ -1550,9 +1576,8 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => WorkoutCameraPage(
-                                              exercise:
-                                                  Map<String, dynamic>.from(ex),
+                                            builder: (_) => ExercisePreviewPage(
+                                              exercise: Map<String, dynamic>.from(ex),
                                             ),
                                           ),
                                         );

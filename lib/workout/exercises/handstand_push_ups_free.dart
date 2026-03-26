@@ -2,11 +2,11 @@ import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
-class PushUpLogic extends BaseExercise {
+class HandstandPushUpsFreeLogic extends BaseExercise {
   bool _isDown = false;
 
-  PushUpLogic(super.targetReps) {
-    feedback = "Get into pushup position";
+  HandstandPushUpsFreeLogic(super.targetReps) {
+    feedback = "Free Handstand Push-ups";
   }
 
   @override
@@ -23,14 +23,13 @@ class PushUpLogic extends BaseExercise {
 
     final leftOk = _conf(lShoulder, lElbow, lWrist);
     final rightOk = _conf(rShoulder, rElbow, rWrist);
-    final backOk = _conf(lShoulder, lHip, lAnkle);
 
     if (!leftOk && !rightOk) {
       feedback = "Make sure your full body is in frame";
       return;
     }
 
-    if (backOk) {
+    if (_conf(lShoulder, lHip, lAnkle)) {
       final backAngle = _angle(lShoulder!, lHip!, lAnkle!);
       if (backAngle < 150) {
         feedback = "Keep your back straight!";
@@ -51,18 +50,19 @@ class PushUpLogic extends BaseExercise {
       feedback = "Go down \u2193";
     }
 
-    if (angle < 85) {
+    if (angle < 80) {
       if (!_isDown) {
         _isDown = true;
         feedback = "Push up \u2191";
       }
     }
 
-    if (_isDown && angle > 155) {
+    if (_isDown && angle > 150) {
       reps++;
       _isDown = false;
       feedback = "Great! Rep $reps \ud83d\udcaa";
     }
+
   }
 
   bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
