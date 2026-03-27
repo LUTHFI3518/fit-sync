@@ -2,67 +2,57 @@ import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
-class PushUpLogic extends BaseExercise {
+class DeadliftsLogic extends BaseExercise {
   bool _isDown = false;
 
-  PushUpLogic(super.targetReps) {
-    feedback = "Get into pushup position";
+  DeadliftsLogic(super.targetReps) {
+    feedback = "Deadlifts";
   }
 
   @override
   void processPose(Pose pose) {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
-    final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
     final lHip = pose.landmarks[PoseLandmarkType.leftHip];
-    final lAnkle = pose.landmarks[PoseLandmarkType.leftAnkle];
+    final lKnee = pose.landmarks[PoseLandmarkType.leftKnee];
 
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
-    final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
-    final rWrist = pose.landmarks[PoseLandmarkType.rightWrist];
+    final rHip = pose.landmarks[PoseLandmarkType.rightHip];
+    final rKnee = pose.landmarks[PoseLandmarkType.rightKnee];
 
-    final leftOk = _conf(lShoulder, lElbow, lWrist);
-    final rightOk = _conf(rShoulder, rElbow, rWrist);
-    final backOk = _conf(lShoulder, lHip, lAnkle);
+    final leftOk = _conf(lShoulder, lHip, lKnee);
+    final rightOk = _conf(rShoulder, rHip, rKnee);
 
     if (!leftOk && !rightOk) {
-      feedback = "Make sure your full body is in frame";
+      feedback = "Make sure full profile is in frame";
       return;
-    }
-
-    if (backOk) {
-      final backAngle = _angle(lShoulder!, lHip!, lAnkle!);
-      if (backAngle < 150) {
-        feedback = "Keep your back straight!";
-        return;
-      }
     }
 
     double angle = 0;
     if (leftOk && rightOk) {
-      angle = (_angle(lShoulder!, lElbow!, lWrist!) + _angle(rShoulder!, rElbow!, rWrist!)) / 2;
+      angle = (_angle(lShoulder!, lHip!, lKnee!) + _angle(rShoulder!, rHip!, rKnee!)) / 2;
     } else if (leftOk) {
-      angle = _angle(lShoulder!, lElbow!, lWrist!);
+      angle = _angle(lShoulder!, lHip!, lKnee!);
     } else {
-      angle = _angle(rShoulder!, rElbow!, rWrist!);
+      angle = _angle(rShoulder!, rHip!, rKnee!);
     }
 
-    if (!_isDown && angle > 155) {
-      feedback = "Go down \u2193";
+    if (!_isDown && angle > 160) {
+      feedback = "Hinge hips down \u2193";
     }
 
-    if (angle < 85) {
+    if (angle < 110) {
       if (!_isDown) {
         _isDown = true;
-        feedback = "Push up \u2191";
+        feedback = "Pull up \u2191";
       }
     }
 
-    if (_isDown && angle > 155) {
+    if (_isDown && angle > 160) {
       reps++;
       _isDown = false;
-      feedback = "Great! Rep $reps \ud83d\udcaa";
+      feedback = "Good hinge! Rep $reps \ud83d\udcaa";
     }
+
   }
 
   bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>

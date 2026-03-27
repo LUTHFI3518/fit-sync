@@ -2,11 +2,11 @@ import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
-class PushUpLogic extends BaseExercise {
+class HandstandPushUpsLogic extends BaseExercise {
   bool _isDown = false;
 
-  PushUpLogic(super.targetReps) {
-    feedback = "Get into pushup position";
+  HandstandPushUpsLogic(super.targetReps) {
+    feedback = "Get into handstand position";
   }
 
   @override
@@ -14,8 +14,6 @@ class PushUpLogic extends BaseExercise {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
     final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
     final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
-    final lHip = pose.landmarks[PoseLandmarkType.leftHip];
-    final lAnkle = pose.landmarks[PoseLandmarkType.leftAnkle];
 
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
     final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
@@ -23,19 +21,10 @@ class PushUpLogic extends BaseExercise {
 
     final leftOk = _conf(lShoulder, lElbow, lWrist);
     final rightOk = _conf(rShoulder, rElbow, rWrist);
-    final backOk = _conf(lShoulder, lHip, lAnkle);
 
     if (!leftOk && !rightOk) {
-      feedback = "Make sure your full body is in frame";
+      feedback = "Ensure upper body is visible";
       return;
-    }
-
-    if (backOk) {
-      final backAngle = _angle(lShoulder!, lHip!, lAnkle!);
-      if (backAngle < 150) {
-        feedback = "Keep your back straight!";
-        return;
-      }
     }
 
     double angle = 0;
@@ -47,21 +36,17 @@ class PushUpLogic extends BaseExercise {
       angle = _angle(rShoulder!, rElbow!, rWrist!);
     }
 
-    if (!_isDown && angle > 155) {
-      feedback = "Go down \u2193";
+    if (!_isDown && angle < 90) {
+      _isDown = true;
+      feedback = "Push up \u2191";
     }
 
-    if (angle < 85) {
-      if (!_isDown) {
-        _isDown = true;
-        feedback = "Push up \u2191";
-      }
-    }
-
-    if (_isDown && angle > 155) {
+    if (_isDown && angle > 150) {
       reps++;
       _isDown = false;
-      feedback = "Great! Rep $reps \ud83d\udcaa";
+      feedback = "Insane form! Rep $reps \ud83d\udcaa";
+    } else if (!_isDown && angle > 150) {
+      feedback = "Lower yourself cleanly \u2193";
     }
   }
 
@@ -77,7 +62,7 @@ class PushUpLogic extends BaseExercise {
     final dot = v1x * v2x + v1y * v2y;
     final mag1 = sqrt(v1x * v1x + v1y * v1y);
     final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
+    if (mag1 == 0 || mag2 == 0) return 0;
     return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
   }
 }

@@ -23,7 +23,7 @@ class WorkoutService {
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) return data;
-    throw Exception(data["error"] ?? "Failed to load journey");
+    throw Exception(data["error"] ?? data["message"] ?? "Failed to load journey");
   }
 
   Future<Map<String, dynamic>> getTodayWorkout() async {
@@ -33,7 +33,7 @@ class WorkoutService {
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) return data;
-    throw Exception(data["error"] ?? "Failed to load today's workout");
+    throw Exception(data["error"] ?? data["message"] ?? "Failed to load today's workout");
   }
 
   /// Marks a single exercise as complete.
@@ -52,6 +52,16 @@ class WorkoutService {
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) return data;
-    throw Exception(data["error"] ?? "Failed to complete exercise");
+    throw Exception(data["error"] ?? data["message"] ?? "Failed to complete exercise");
+  }
+
+  Future<Map<String, dynamic>> getExerciseInfo(String name) async {
+    final response = await http.get(
+      Uri.parse("$baseUrl/exercise-info/${Uri.encodeComponent(name)}"),
+      headers: await _headers(),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) return data;
+    throw Exception(data["error"] ?? "Failed to load exercise info");
   }
 }
