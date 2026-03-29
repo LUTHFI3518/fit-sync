@@ -7,14 +7,22 @@ class WorkoutController extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _error;
+  bool _isAbsencePending = false;
+  bool _isPaused = false;
 
   int totalDays = 90;
   int currentDay = 1;
   int streak = 0;
+  int planMonths = 3; // default until loaded
   List<int> completedDays = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isAbsencePending => _isAbsencePending;
+  bool get isPaused => _isPaused;
+
+  /// Human-readable plan label, e.g. "90-Day Journey" or "180-Day Journey"
+  String get planLabel => '$totalDays-Day Journey';
 
   Map<String, dynamic>? todayWorkout;
 
@@ -31,6 +39,7 @@ class WorkoutController extends ChangeNotifier {
       totalDays = data["totalDays"];
       currentDay = data["currentDay"];
       streak = data["streak"];
+      planMonths = data["planMonths"] ?? 3;
       completedDays = List<int>.from(data["completedDays"]);
 
       _error = null;
@@ -45,6 +54,8 @@ class WorkoutController extends ChangeNotifier {
   Future<void> loadTodayWorkout() async {
     try {
       _isLoading = true;
+      _isAbsencePending = false;
+      _isPaused = false;
       notifyListeners();
 
       final data = await _service.getTodayWorkout();
@@ -66,7 +77,18 @@ class WorkoutController extends ChangeNotifier {
 
       _error = null;
     } catch (e) {
-      _error = e.toString();
+      final errorStr = e.toString();
+      _error = errorStr;
+      
+      // Specifically catch the absence_unresolved state
+      if (errorStr.contains("You missed some days") || errorStr.contains("absence_unresolved")) {
+        _isAbsencePending = true;
+      }
+      
+      // Specifically catch the paused state
+      if (errorStr.contains("paused")) {
+        _isPaused = true;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

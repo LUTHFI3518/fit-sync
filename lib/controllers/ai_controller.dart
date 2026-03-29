@@ -89,6 +89,11 @@ class AiController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Injects a message from the AI assistant directly.
+  void addAssistantMessage(String text) {
+    _addMessage(ChatMessage(text: text, isUser: false));
+  }
+
   // ── Send text ───
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -101,7 +106,17 @@ class AiController extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final reply = await _service.sendMessage(text);
+      final currentSession = _sessions[_activeSessionIndex];
+      // Build history excluding the very newly added message
+      final history = currentSession.messages
+          .take(currentSession.messages.length - 1)
+          .map((m) => {
+                "role": m.isUser ? "user" : "assistant",
+                "content": m.text,
+              })
+          .toList();
+
+      final reply = await _service.sendMessage(text, history: history);
       _addMessage(ChatMessage(text: reply, isUser: false));
     } catch (e) {
       _error = e.toString();
@@ -127,7 +142,17 @@ class AiController extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final result = await _service.sendFoodImage(imageFile);
+      final currentSession = _sessions[_activeSessionIndex];
+      // Build history excluding the very newly added message
+      final history = currentSession.messages
+          .take(currentSession.messages.length - 1)
+          .map((m) => {
+                "role": m.isUser ? "user" : "assistant",
+                "content": m.text,
+              })
+          .toList();
+
+      final result = await _service.sendFoodImage(imageFile, history: history);
       final reply = result['reply'] as String;
       _addMessage(ChatMessage(text: reply, isUser: false));
     } catch (e) {

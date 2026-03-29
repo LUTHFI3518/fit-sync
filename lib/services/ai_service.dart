@@ -17,24 +17,31 @@ class AiService {
     };
   }
 
-  Future<String> sendMessage(String message) async {
+  Future<String> sendMessage(String message, {List<Map<String, String>> history = const []}) async {
     final response = await http.post(
       Uri.parse("$baseUrl/chat"),
       headers: await _headers(),
-      body: jsonEncode({"message": message}),
+      body: jsonEncode({"message": message, "history": history}),
     );
 
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      return data["reply"] ?? "No response";
-    } else {
-      throw Exception(data["error"] ?? "Failed to send message");
+    try {
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return data["reply"] ?? "No response";
+      } else {
+        throw Exception(data["error"] ?? "Failed to send message");
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        throw Exception("Server encountered an error. Please try again later.");
+      }
+      rethrow;
     }
   }
 
   /// Sends a food image (File) to the backend for recognition.
   /// Returns a map with "reply" (String) and "detectedFood" (Map).
-  Future<Map<String, dynamic>> sendFoodImage(File imageFile) async {
+  Future<Map<String, dynamic>> sendFoodImage(File imageFile, {List<Map<String, String>> history = const []}) async {
     // Convert to base64 data URL
     final bytes = await imageFile.readAsBytes();
     final base64Str = base64Encode(bytes);
@@ -45,17 +52,24 @@ class AiService {
     final response = await http.post(
       Uri.parse("$baseUrl/food-image"),
       headers: await _headers(),
-      body: jsonEncode({"image": dataUrl}),
+      body: jsonEncode({"image": dataUrl, "history": history}),
     );
 
-    final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      return {
-        'reply': data['reply'] ?? 'Food logged!',
-        'detectedFood': data['detectedFood'],
-      };
-    } else {
-      throw Exception(data["error"] ?? "Failed to process image");
+    try {
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {
+          'reply': data['reply'] ?? 'Food logged!',
+          'detectedFood': data['detectedFood'],
+        };
+      } else {
+        throw Exception(data["error"] ?? "Failed to process image");
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        throw Exception("Server encountered an error. Please try again later.");
+      }
+      rethrow;
     }
   }
 }

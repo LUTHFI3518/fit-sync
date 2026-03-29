@@ -148,6 +148,7 @@ class _ProfileHeader extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const purple = Color(0xFF5B3FE8);
     const accentGreen = Color(0xFFCCFF00);
+    const accentGreenBright = Color(0xFFAAFF57);
     final heightLabel = useMetricHeight
         ? '${height.round()} cm'
         : '${(height / 2.54).round()} in';
@@ -163,6 +164,32 @@ class _ProfileHeader extends StatelessWidget {
           child: Stack(
             alignment: Alignment.bottomRight,
             children: [
+              // Glowing ring behind avatar
+              if (isDark)
+                Container(
+                  width: 118,
+                  height: 118,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentGreenBright.withValues(alpha: 0.25),
+                        blurRadius: 20,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                    border: Border.all(
+                      color: accentGreenBright.withValues(alpha: 0.35),
+                      width: 2,
+                    ),
+                    gradient: RadialGradient(
+                      colors: [
+                        accentGreenBright.withValues(alpha: 0.08),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
               ClipOval(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -180,7 +207,9 @@ class _ProfileHeader extends StatelessWidget {
                         ],
                       ),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: isDark
+                            ? accentGreenBright.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
@@ -191,9 +220,9 @@ class _ProfileHeader extends StatelessWidget {
                             ? Image.file(File(avatarPath!), fit: BoxFit.cover)
                             : Container(
                                 color: const Color(0xFF1A3A21),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person_rounded,
-                                  color: Colors.white54,
+                                  color: isDark ? accentGreenBright.withValues(alpha: 0.5) : Colors.white54,
                                   size: 56,
                                 ),
                               ),
@@ -213,7 +242,7 @@ class _ProfileHeader extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        (isDark ? accentGreen : purple).withValues(alpha: 0.9),
+                        (isDark ? accentGreenBright : purple).withValues(alpha: 0.9),
                         (isDark ? accentGreen : purple).withValues(alpha: 0.7),
                       ],
                     ),
@@ -224,9 +253,7 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isDark ? accentGreen : purple).withValues(
-                          alpha: 0.4,
-                        ),
+                        color: (isDark ? accentGreenBright : purple).withValues(alpha: 0.4),
                         blurRadius: 12,
                         spreadRadius: 1,
                       ),
@@ -255,7 +282,7 @@ class _ProfileHeader extends StatelessWidget {
         Text(
           '$heightLabel   •   $weightLabel',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.getTextColor(context, opacity: 0.7),
+            color: AppTheme.getTextColor(context, opacity: 0.6),
             letterSpacing: -0.3,
           ),
         ),
@@ -271,12 +298,29 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: AppTheme.getTextColor(context, opacity: 0.7),
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        if (isDark)
+          Container(
+            width: 3,
+            height: 14,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFAAFF57),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: isDark ? const Color(0xFFAAFF57).withValues(alpha: 0.85) : AppTheme.getTextColor(context, opacity: 0.7),
+            letterSpacing: 0.5,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -308,6 +352,7 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -332,7 +377,9 @@ class _SettingsRow extends StatelessWidget {
               else
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: AppTheme.getTextColor(context, opacity: 0.5),
+                  color: isDark
+                      ? const Color(0xFFAAFF57).withValues(alpha: 0.6)
+                      : AppTheme.getTextColor(context, opacity: 0.4),
                   size: 20,
                 ),
             ],

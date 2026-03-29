@@ -176,8 +176,8 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const purple = Color(0xFF5B3FE8);
-    const lime = Color(0xFFCCFF00);
-    final accentColor = isDark ? lime : purple;
+    const limeAccent = Color(0xFFAAFF57);
+    final accentColor = isDark ? limeAccent : purple;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -214,21 +214,26 @@ class _SplashScreenState extends State<SplashScreen>
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            accentColor.withValues(alpha: 0.25),
-                            accentColor.withValues(alpha: 0.08),
-                          ],
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF1A3A21).withValues(alpha: 0.95),
+                                  const Color(0xFF0A1A0D).withValues(alpha: 0.9),
+                                ]
+                              : [
+                                  accentColor.withValues(alpha: 0.22),
+                                  accentColor.withValues(alpha: 0.08),
+                                ],
                         ),
                         border: Border.all(
-                          color: accentColor.withValues(alpha: 0.5),
+                          color: accentColor.withValues(alpha: isDark ? 0.7 : 0.5),
                           width: 2.5,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: accentColor.withValues(
-                              alpha: 0.3 * _pulseScale.value,
+                              alpha: (isDark ? 0.45 : 0.25) * _pulseScale.value,
                             ),
-                            blurRadius: 30 * _pulseScale.value,
+                            blurRadius: 35 * _pulseScale.value,
                             spreadRadius: 5 * (_pulseScale.value - 1.0),
                           ),
                         ],

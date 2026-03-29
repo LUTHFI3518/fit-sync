@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-
 import 'auth_background.dart';
 
 const Color kLimeAccent = Color(0xFFCCFF00);
+const Color kLimeAccentBright = Color(0xFFAAFF57);
 
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
@@ -44,11 +44,10 @@ class AuthScaffold extends StatelessWidget {
                       child: IconButton(
                         style: IconButton.styleFrom(
                           backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.1)
+                              ? Colors.white.withValues(alpha: 0.08)
                               : Colors.black.withValues(alpha: 0.07),
-                          foregroundColor: isDark
-                              ? Colors.white
-                              : Colors.black87,
+                          foregroundColor:
+                              isDark ? Colors.white : Colors.black87,
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -73,26 +72,43 @@ class AuthScaffold extends StatelessWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.2),
-                                Colors.white.withValues(alpha: 0.1),
-                              ],
+                              colors: isDark
+                                  ? [
+                                      kLimeAccentBright.withValues(alpha: 0.18),
+                                      const Color(0xFF1A3A21).withValues(
+                                          alpha: 0.9),
+                                    ]
+                                  : [
+                                      Colors.white.withValues(alpha: 0.2),
+                                      Colors.white.withValues(alpha: 0.1),
+                                    ],
                             ),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.4),
+                              color: isDark
+                                  ? kLimeAccentBright.withValues(alpha: 0.5)
+                                  : Colors.white.withValues(alpha: 0.4),
                               width: 2.5,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
+                            boxShadow: isDark
+                                ? [
+                                    BoxShadow(
+                                      color: kLimeAccentBright.withValues(
+                                          alpha: 0.25),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.fitness_center,
-                            color: Colors.white,
+                            color: isDark ? kLimeAccentBright : Colors.white,
                             size: 28,
                           ),
                         ),
@@ -130,7 +146,8 @@ class AuthScaffold extends StatelessWidget {
   }
 }
 
-class PrimaryButton extends StatelessWidget {
+// Bouncing primary button with forest green dark mode gradient
+class PrimaryButton extends StatefulWidget {
   const PrimaryButton({
     super.key,
     required this.label,
@@ -141,36 +158,99 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   @override
+  State<PrimaryButton> createState() => _PrimaryButtonState();
+}
+
+class _PrimaryButtonState extends State<PrimaryButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    if (widget.onPressed == null) return;
+    _ctrl.forward().then((_) {
+      _ctrl.reverse();
+      widget.onPressed?.call();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const purple = Color(0xFF5B3FE8);
-    final bgColor = isDark ? kLimeAccent.withValues(alpha: 0.95) : purple;
-    final textColor = isDark ? Colors.black87 : Colors.white;
 
-    return SizedBox(
-      width: double.infinity,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: bgColor,
-              foregroundColor: textColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              elevation: 0,
-            ),
-            onPressed: onPressed,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                letterSpacing: -0.3,
+    return GestureDetector(
+      onTap: _onTap,
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: child,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? [
+                            const Color(0xFF2D6A3F),
+                            const Color(0xFF1A4D2E),
+                          ]
+                        : [
+                            purple,
+                            purple.withValues(alpha: 0.85),
+                          ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? kLimeAccentBright.withValues(alpha: 0.15)
+                          : purple.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  widget.label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? kLimeAccentBright : Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    letterSpacing: -0.3,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
               ),
             ),
           ),
@@ -195,7 +275,7 @@ class SecondaryButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fgColor = isDark ? Colors.white : Colors.black87;
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.3)
+        ? kLimeAccentBright.withValues(alpha: 0.3)
         : Colors.black.withValues(alpha: 0.15);
 
     return SizedBox(
@@ -256,15 +336,15 @@ class AuthTextField extends StatelessWidget {
     const purple = Color(0xFF5B3FE8);
     final textColor = isDark ? Colors.white : Colors.black87;
     final hintColor = isDark
-        ? Colors.white.withValues(alpha: 0.5)
+        ? Colors.white.withValues(alpha: 0.45)
         : Colors.black.withValues(alpha: 0.4);
     final fillColor = isDark
-        ? Colors.white.withValues(alpha: 0.1)
+        ? const Color(0xFF0F2014).withValues(alpha: 0.8)
         : Colors.black.withValues(alpha: 0.04);
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.2)
-        : Colors.black.withValues(alpha: 0.15);
-    final focusedColor = isDark ? kLimeAccent.withValues(alpha: 0.6) : purple;
+        ? kLimeAccentBright.withValues(alpha: 0.15)
+        : Colors.black.withValues(alpha: 0.12);
+    final focusedColor = isDark ? kLimeAccentBright : purple;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -275,9 +355,8 @@ class AuthTextField extends StatelessWidget {
           focusNode: focusNode,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          textInputAction: nextFocus != null
-              ? TextInputAction.next
-              : TextInputAction.done,
+          textInputAction:
+              nextFocus != null ? TextInputAction.next : TextInputAction.done,
           onSubmitted: (_) {
             if (nextFocus != null) {
               FocusScope.of(context).requestFocus(nextFocus);

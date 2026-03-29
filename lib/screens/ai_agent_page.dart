@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../controllers/ai_controller.dart';
+import '../controllers/workout_controller.dart';
 import '../widgets/auth_background.dart';
 import '../core/widgets/glass_container.dart';
 
@@ -17,6 +18,39 @@ class _AiAgentPageState extends State<AiAgentPage> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
+  bool _greetingTriggered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkForProactiveGreeting();
+  }
+
+  void _checkForProactiveGreeting() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      final workoutCtrl = context.read<WorkoutController>();
+      final aiCtrl = context.read<AiController>();
+      
+      // 1. Check for PAUSED state first (Intentional Rest)
+      if (workoutCtrl.isPaused && aiCtrl.messages.isEmpty && !_greetingTriggered) {
+        _greetingTriggered = true;
+        aiCtrl.addAssistantMessage(
+          "Take all the time you need to recover! 🛌\n\nI've frozen your streak so you won't lose any progress. Focus on resting and staying hydrated. 💧\n\nJust tell me 'I am ready to resume' whenever you're feeling strong enough to continue.",
+        );
+        return;
+      }
+
+      // 2. Check for ABSENCE state (Unresolved Gap)
+      if (workoutCtrl.isAbsencePending && aiCtrl.messages.isEmpty && !_greetingTriggered) {
+        _greetingTriggered = true;
+        aiCtrl.addAssistantMessage(
+          "Hello there! I noticed you've been away for a few sessions. 🛡️\n\nIs everything alright? Were you feeling unwell, or were you just caught up with something else? Please let me know so we can plan your recovery.",
+        );
+      }
+    });
+  }
 
   void _sendMessage() {
     final text = _textController.text.trim();
@@ -53,7 +87,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF0F2014) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -65,7 +99,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
             Container(
               width: 40, height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.4),
+                color: isDark ? const Color(0xFFAAFF57).withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -80,7 +114,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
             ),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.camera_alt_rounded, color: Color(0xFF5B3FE8)),
+              leading: Icon(Icons.camera_alt_rounded, color: isDark ? const Color(0xFFAAFF57) : const Color(0xFF5B3FE8)),
               title: Text('Take a Photo', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
               onTap: () {
                 Navigator.pop(context);
@@ -88,7 +122,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF5B3FE8)),
+              leading: Icon(Icons.photo_library_rounded, color: isDark ? const Color(0xFFAAFF57) : const Color(0xFF5B3FE8)),
               title: Text('Choose from Gallery', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
               onTap: () {
                 Navigator.pop(context);
@@ -286,7 +320,6 @@ class _ChatBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // Image thumbnail if present
             if (message.imageLocalPath != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -298,30 +331,70 @@ class _ChatBubble extends StatelessWidget {
                 ),
               ),
             if (message.imageLocalPath != null) const SizedBox(height: 6),
-            // Text bubble
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: message.isUser
-                    ? (isDark ? const Color(0xFFCCFF00).withValues(alpha: 0.9) : const Color(0xFF5B3FE8))
-                    : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06)),
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: message.isUser ? const Radius.circular(20) : Radius.zero,
-                  bottomRight: message.isUser ? Radius.zero : const Radius.circular(20),
-                ),
-              ),
-              child: Text(
-                message.text,
-                style: TextStyle(
+            // AI messages: left border accent in dark mode
+            if (!message.isUser && isDark)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 3,
+                    margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFAAFF57).withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    height: null,
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F2014).withValues(alpha: 0.85),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                          bottomRight: Radius.circular(20),
+                        ),
+                        border: Border.all(
+                          color: const Color(0xFFAAFF57).withValues(alpha: 0.12),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        message.text,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
                   color: message.isUser
-                      ? (isDark ? Colors.black87 : Colors.white)
-                      : (isDark ? Colors.white : Colors.black87),
-                  fontSize: 15,
+                      ? (isDark ? const Color(0xFFAAFF57).withValues(alpha: 0.92) : const Color(0xFF5B3FE8))
+                      : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06)),
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(20),
+                    topRight: const Radius.circular(20),
+                    bottomLeft: message.isUser ? const Radius.circular(20) : Radius.zero,
+                    bottomRight: message.isUser ? Radius.zero : const Radius.circular(20),
+                  ),
+                ),
+                child: Text(
+                  message.text,
+                  style: TextStyle(
+                    color: message.isUser
+                        ? (isDark ? Colors.black87 : Colors.white)
+                        : (isDark ? Colors.white : Colors.black87),
+                    fontSize: 15,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -344,8 +417,14 @@ class _HistoryDrawer extends StatelessWidget {
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        color: isDark ? const Color(0xFF0A1A0D) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(
+            color: isDark ? const Color(0xFFAAFF57).withValues(alpha: 0.2) : Colors.black12,
+            width: 1.2,
+          ),
+        ),
       ),
       child: Column(
         children: [

@@ -10,6 +10,12 @@ import '../core/widgets/glass_container.dart';
 
 enum TimeView { day, week, month }
 
+// Shared accent colours
+const _lime = Color(0xFFAAFF57);
+const _emerald = Color(0xFF00C853);
+const _darkBar = Color(0xFF1A3A21);
+const _purple = Color(0xFF5B3FE8);
+
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
 
@@ -17,15 +23,39 @@ class StatisticsPage extends StatefulWidget {
   State<StatisticsPage> createState() => _StatisticsPageState();
 }
 
-class _StatisticsPageState extends State<StatisticsPage> {
+class _StatisticsPageState extends State<StatisticsPage>
+    with SingleTickerProviderStateMixin {
   TimeView _selectedView = TimeView.day;
+  late final AnimationController _fadeCtrl;
+  late final Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+      value: 1.0,
+    );
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+
     Future.microtask(() {
       if (mounted) context.read<StatsController>().loadAllStats();
     });
+  }
+
+  @override
+  void dispose() {
+    _fadeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _switchView(TimeView v) async {
+    if (v == _selectedView) return;
+    await _fadeCtrl.reverse();
+    if (!mounted) return;
+    setState(() => _selectedView = v);
+    _fadeCtrl.forward();
   }
 
   @override
@@ -46,16 +76,23 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 const SizedBox(height: 24),
                 _TimeToggle(
                   selected: _selectedView,
-                  onChanged: (view) => setState(() => _selectedView = view),
+                  onChanged: _switchView,
                 ),
                 const SizedBox(height: 24),
-                _CaloriesBarChart(view: _selectedView),
-                const SizedBox(height: 24),
-                _NetCalorieBalance(view: _selectedView),
-                const SizedBox(height: 24),
-                _MacronutrientRingChart(view: _selectedView),
-                const SizedBox(height: 24),
-                const _StreakCalendarCard(),
+                FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Column(
+                    children: [
+                      _CaloriesBarChart(view: _selectedView),
+                      const SizedBox(height: 24),
+                      _NetCalorieBalance(view: _selectedView),
+                      const SizedBox(height: 24),
+                      _MacronutrientRingChart(view: _selectedView),
+                      const SizedBox(height: 24),
+                      const _StreakCalendarCard(),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -73,9 +110,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 }
 
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
 //  Header
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
 class _Header extends StatelessWidget {
   const _Header({required this.dateStr});
   final String dateStr;
@@ -91,12 +128,26 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                dateStr,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isDark ? Colors.white54 : Colors.black45,
-                  fontSize: 12,
-                ),
+              Row(
+                children: [
+                  if (isDark)
+                    Container(
+                      width: 3,
+                      height: 12,
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: _lime,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  Text(
+                    dateStr,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark ? Colors.white54 : Colors.black45,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -114,9 +165,9 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────
-//  Time toggle
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
+//  Time Toggle
+// ─────────────────────────────────────────
 class _TimeToggle extends StatelessWidget {
   const _TimeToggle({required this.selected, required this.onChanged});
   final TimeView selected;
@@ -128,7 +179,7 @@ class _TimeToggle extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       borderRadius: BorderRadius.circular(16),
       blur: 15.0,
-      opacity: 0.12,
+      opacity: 0.10,
       child: Row(
         children: [
           Expanded(child: _ToggleButton(label: 'Day', isSelected: selected == TimeView.day, onTap: () => onChanged(TimeView.day))),
@@ -149,10 +200,11 @@ class _ToggleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const purple = Color(0xFF5B3FE8);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected
@@ -160,14 +212,14 @@ class _ToggleButton extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: isDark
-                      ? [Colors.white.withValues(alpha: 0.2), Colors.white.withValues(alpha: 0.1)]
-                      : [purple.withValues(alpha: 0.85), purple.withValues(alpha: 0.7)],
+                      ? [_lime.withValues(alpha: 0.25), _emerald.withValues(alpha: 0.15)]
+                      : [_purple.withValues(alpha: 0.85), _purple.withValues(alpha: 0.7)],
                 )
               : null,
           borderRadius: BorderRadius.circular(12),
           border: isSelected
               ? Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.3) : purple.withValues(alpha: 0.5),
+                  color: isDark ? _lime.withValues(alpha: 0.4) : _purple.withValues(alpha: 0.5),
                   width: 1,
                 )
               : null,
@@ -176,9 +228,11 @@ class _ToggleButton extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
+            color: isSelected
+                ? (isDark ? _lime : Colors.white)
+                : (isDark ? Colors.white.withValues(alpha: 0.55) : Colors.black54),
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 13,
             letterSpacing: -0.3,
           ),
         ),
@@ -187,9 +241,9 @@ class _ToggleButton extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────
-//  Calories Bar Chart (Problem 1, 2, 3)
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
+//  Calories Bar Chart
+// ─────────────────────────────────────────
 class _CaloriesBarChart extends StatefulWidget {
   const _CaloriesBarChart({required this.view});
   final TimeView view;
@@ -199,7 +253,7 @@ class _CaloriesBarChart extends StatefulWidget {
 }
 
 class _CaloriesBarChartState extends State<_CaloriesBarChart> {
-  int _selectedBarIndex = -1; // -1 = none → shows total
+  int _selectedBarIndex = -1;
 
   @override
   void didUpdateWidget(_CaloriesBarChart oldWidget) {
@@ -212,11 +266,22 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const purple = Color(0xFF5B3FE8);
     final ctrl = context.watch<StatsController>();
 
     if (ctrl.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Container(
+        height: 260,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F2014) : Colors.white.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: isDark ? _lime : _purple,
+            strokeWidth: 2,
+          ),
+        ),
+      );
     }
 
     List<double> chartData = [];
@@ -225,7 +290,6 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
     String displaySubTitle = '';
 
     if (widget.view == TimeView.day) {
-      // Breakfast / Lunch / Dinner bars
       final breakfast = (ctrl.dailyStats?['breakfastCalories'] ?? 0 as num).toDouble();
       final lunch = (ctrl.dailyStats?['lunchCalories'] ?? 0 as num).toDouble();
       final dinner = (ctrl.dailyStats?['dinnerCalories'] ?? 0 as num).toDouble();
@@ -237,14 +301,12 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
         displaySubTitle = '${chartData[_selectedBarIndex].toInt()} cal — ${labels[_selectedBarIndex]}';
       } else {
         final total = breakfast + lunch + dinner;
-        displaySubTitle = '${total.toInt()} cal total';
+        displaySubTitle = '${total.toInt()} cal today';
       }
     } else if (widget.view == TimeView.week) {
-      // Last 7 days daily intake
       final weekStats = ctrl.weeklyStats;
       chartData = List.filled(7, 0.0);
       labels = List.filled(7, '');
-
       const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       for (int i = 0; i < weekStats.length && i < 7; i++) {
         chartData[i] = (weekStats[i]['intake'] ?? 0 as num).toDouble();
@@ -256,14 +318,12 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
         }
       }
       highlightIndex = _selectedBarIndex >= 0 ? _selectedBarIndex : 6;
-
       if (_selectedBarIndex >= 0 && _selectedBarIndex < chartData.length) {
         displaySubTitle = '${chartData[_selectedBarIndex].toInt()} cal — ${labels[_selectedBarIndex]}';
       } else {
         displaySubTitle = '${ctrl.weeklyTotalIntake.toInt()} cal this week';
       }
     } else {
-      // Last 4 weeks weekly intake
       final monthStats = ctrl.monthlyStats;
       chartData = List.filled(4, 0.0);
       labels = ['W1', 'W2', 'W3', 'W4'];
@@ -271,7 +331,6 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
         chartData[i] = (monthStats[i]['intake'] ?? 0 as num).toDouble();
       }
       highlightIndex = _selectedBarIndex >= 0 ? _selectedBarIndex : 3;
-
       if (_selectedBarIndex >= 0 && _selectedBarIndex < chartData.length) {
         displaySubTitle = '${chartData[_selectedBarIndex].toInt()} cal — ${labels[_selectedBarIndex]}';
       } else {
@@ -285,18 +344,32 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
       padding: const EdgeInsets.all(20),
       borderRadius: BorderRadius.circular(24),
       blur: 15.0,
-      opacity: 0.12,
-      borderColor: isDark ? null : purple.withValues(alpha: 0.35),
-      borderWidth: isDark ? 1.0 : 1.5,
+      opacity: isDark ? 0.10 : 0.12,
+      borderColor: isDark ? _lime.withValues(alpha: 0.12) : _purple.withValues(alpha: 0.35),
+      borderWidth: 1.0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Calories',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              if (isDark)
+                Container(
+                  width: 3,
+                  height: 16,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: _lime,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              Text(
+                'Calories',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           AnimatedSwitcher(
@@ -305,7 +378,8 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
               displaySubTitle,
               key: ValueKey(displaySubTitle),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isDark ? Colors.white70 : Colors.black54,
+                color: isDark ? _lime.withValues(alpha: 0.8) : Colors.black54,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -315,7 +389,7 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: (maxVal > 0 ? maxVal : 600) * 1.2,
+                maxY: (maxVal > 0 ? maxVal : 600) * 1.25,
                 barTouchData: BarTouchData(
                   enabled: true,
                   touchCallback: (event, response) {
@@ -342,13 +416,15 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (isHighlighted)
-                              const Icon(Icons.local_fire_department, size: 14, color: Color(0xFFFF6B35)),
+                              Icon(Icons.local_fire_department, size: 13, color: _lime),
                             if (isHighlighted) const SizedBox(height: 2),
                             Text(
                               labels[index],
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isHighlighted ? (isDark ? Colors.white : Colors.black87) : (isDark ? Colors.white70 : Colors.black54),
+                                color: isHighlighted
+                                    ? (isDark ? _lime : Colors.black87)
+                                    : (isDark ? Colors.white54 : Colors.black45),
                                 fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
@@ -361,7 +437,18 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: const FlGridData(show: false),
+                gridData: FlGridData(
+                  show: true,
+                  drawHorizontalLine: true,
+                  horizontalInterval: (maxVal > 0 ? maxVal : 600) * 0.4,
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05),
+                    strokeWidth: 1,
+                  ),
+                  drawVerticalLine: false,
+                ),
                 borderData: FlBorderData(show: false),
                 barGroups: [
                   for (int i = 0; i < chartData.length; i++)
@@ -370,11 +457,21 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
                       barRods: [
                         BarChartRodData(
                           toY: chartData[i] > 0 ? chartData[i] : 0.1,
-                          color: (_selectedBarIndex == i)
-                              ? (isDark ? const Color(0xFFCCFF00) : purple)
-                              : const Color(0xFFFFF9C4).withValues(alpha: isDark ? 1 : 0.85),
+                          gradient: (_selectedBarIndex == i || _selectedBarIndex == -1)
+                              ? LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: _selectedBarIndex == i
+                                      ? (isDark ? [_lime, const Color(0xFF88DD33)] : [_purple, _purple.withValues(alpha: 0.8)])
+                                      : (isDark ? [_darkBar, const Color(0xFF2A5535)] : [_purple.withValues(alpha: 0.3), _purple.withValues(alpha: 0.2)]),
+                                )
+                              : LinearGradient(
+                                  colors: isDark
+                                      ? [_darkBar, const Color(0xFF2A5535)]
+                                      : [_purple.withValues(alpha: 0.3), _purple.withValues(alpha: 0.2)],
+                                ),
                           width: widget.view == TimeView.day ? 40 : 20,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                         ),
                       ],
                     ),
@@ -388,7 +485,7 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
               child: Text(
                 'Tap a bar to see meal details',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isDark ? Colors.white38 : Colors.black38,
+                  color: isDark ? Colors.white30 : Colors.black38,
                   fontSize: 11,
                 ),
                 textAlign: TextAlign.center,
@@ -400,9 +497,9 @@ class _CaloriesBarChartState extends State<_CaloriesBarChart> {
   }
 }
 
-// ──────────────────────────────────────────────
-//  Net Calorie Balance (Problem 4)
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
+//  Net Calorie Balance with animated counter
+// ─────────────────────────────────────────
 class _NetCalorieBalance extends StatelessWidget {
   const _NetCalorieBalance({required this.view});
   final TimeView view;
@@ -411,7 +508,6 @@ class _NetCalorieBalance extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = context.watch<StatsController>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const purple = Color(0xFF5B3FE8);
 
     double caloriesIn = 0;
     double caloriesOut = 0;
@@ -435,18 +531,32 @@ class _NetCalorieBalance extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       borderRadius: BorderRadius.circular(24),
       blur: 15.0,
-      opacity: 0.12,
-      borderColor: isDark ? null : purple.withValues(alpha: 0.35),
-      borderWidth: isDark ? 1.0 : 1.5,
+      opacity: isDark ? 0.10 : 0.12,
+      borderColor: isDark ? _lime.withValues(alpha: 0.12) : _purple.withValues(alpha: 0.35),
+      borderWidth: 1.0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Net Calorie Balance',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              if (isDark)
+                Container(
+                  width: 3,
+                  height: 16,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: _lime,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              Text(
+                'Net Calorie Balance',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
           if (view != TimeView.day)
             Padding(
@@ -454,24 +564,30 @@ class _NetCalorieBalance extends StatelessWidget {
               child: Text(
                 view == TimeView.week ? 'Last 7 days' : 'Last 4 weeks',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isDark ? Colors.white54 : Colors.black45,
+                  color: isDark ? Colors.white38 : Colors.black45,
                 ),
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _BalanceItem(label: 'Calories In', value: '${caloriesIn.toInt()}', color: const Color(0xFF4CAF50)),
-              _BalanceItem(
-                label: 'Calories Out',
-                value: caloriesOut > 0 ? '${caloriesOut.toInt()}' : '—',
-                color: const Color(0xFFE91E63),
+              _AnimatedBalanceItem(
+                label: 'Calories In',
+                targetValue: caloriesIn.toInt(),
+                color: isDark ? _emerald : const Color(0xFF4CAF50),
               ),
-              _BalanceItem(
+              Container(width: 1, height: 40, color: Colors.white12),
+              _AnimatedBalanceItem(
+                label: 'Calories Out',
+                targetValue: caloriesOut.toInt(),
+                color: const Color(0xFFFF4757),
+              ),
+              Container(width: 1, height: 40, color: Colors.white12),
+              _AnimatedBalanceItem(
                 label: 'Net',
-                value: '${net.toInt()}',
-                color: net >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE91E63),
+                targetValue: net.toInt(),
+                color: net >= 0 ? (isDark ? _emerald : const Color(0xFF4CAF50)) : const Color(0xFFFF4757),
               ),
             ],
           ),
@@ -481,10 +597,14 @@ class _NetCalorieBalance extends StatelessWidget {
   }
 }
 
-class _BalanceItem extends StatelessWidget {
-  const _BalanceItem({required this.label, required this.value, required this.color});
+class _AnimatedBalanceItem extends StatelessWidget {
+  const _AnimatedBalanceItem({
+    required this.label,
+    required this.targetValue,
+    required this.color,
+  });
   final String label;
-  final String value;
+  final int targetValue;
   final Color color;
 
   @override
@@ -492,15 +612,24 @@ class _BalanceItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.bold),
+        TweenAnimationBuilder<int>(
+          tween: IntTween(begin: 0, end: targetValue),
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeOut,
+          builder: (context, value, _) => Text(
+            value == 0 && targetValue == 0 ? '—' : '$value',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+            ),
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: isDark ? Colors.white70 : Colors.black54,
+            color: isDark ? Colors.white54 : Colors.black54,
             fontSize: 11,
           ),
         ),
@@ -509,9 +638,9 @@ class _BalanceItem extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────
-//  Macronutrients (Problem 5)
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
+//  Macronutrient Ring Chart
+// ─────────────────────────────────────────
 class _MacronutrientRingChart extends StatelessWidget {
   const _MacronutrientRingChart({required this.view});
   final TimeView view;
@@ -520,7 +649,6 @@ class _MacronutrientRingChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = context.watch<StatsController>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const purple = Color(0xFF5B3FE8);
 
     final double proteinG;
     final double carbsG;
@@ -545,30 +673,33 @@ class _MacronutrientRingChart extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       borderRadius: BorderRadius.circular(24),
       blur: 15.0,
-      opacity: 0.12,
-      borderColor: isDark ? null : purple.withValues(alpha: 0.35),
-      borderWidth: isDark ? 1.0 : 1.5,
+      opacity: isDark ? 0.10 : 0.12,
+      borderColor: isDark ? _lime.withValues(alpha: 0.12) : _purple.withValues(alpha: 0.35),
+      borderWidth: 1.0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Macronutrients',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (view != TimeView.day)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                'Macros are based on today\'s food log',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isDark ? Colors.white54 : Colors.black45,
-                  fontSize: 11,
+          Row(
+            children: [
+              if (isDark)
+                Container(
+                  width: 3,
+                  height: 16,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: _lime,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              Text(
+                'Macronutrients',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
+            ],
+          ),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -577,7 +708,7 @@ class _MacronutrientRingChart extends StatelessWidget {
                   label: 'Protein',
                   valueG: proteinG,
                   percent: totalG > 0 ? proteinG / totalG : 0,
-                  color: const Color(0xFF4CAF50),
+                  color: isDark ? _emerald : const Color(0xFF4CAF50),
                 ),
               ),
               Expanded(
@@ -585,7 +716,7 @@ class _MacronutrientRingChart extends StatelessWidget {
                   label: 'Carbs',
                   valueG: carbsG,
                   percent: totalG > 0 ? carbsG / totalG : 0,
-                  color: const Color(0xFFFFB74D),
+                  color: isDark ? _lime : const Color(0xFFFFB74D),
                 ),
               ),
               Expanded(
@@ -593,7 +724,7 @@ class _MacronutrientRingChart extends StatelessWidget {
                   label: 'Fats',
                   valueG: fatsG,
                   percent: totalG > 0 ? fatsG / totalG : 0,
-                  color: const Color(0xFFE91E63),
+                  color: const Color(0xFFFF4757),
                 ),
               ),
             ],
@@ -605,7 +736,12 @@ class _MacronutrientRingChart extends StatelessWidget {
 }
 
 class _MacroRing extends StatelessWidget {
-  const _MacroRing({required this.label, required this.valueG, required this.percent, required this.color});
+  const _MacroRing({
+    required this.label,
+    required this.valueG,
+    required this.percent,
+    required this.color,
+  });
   final String label;
   final double valueG;
   final double percent;
@@ -617,12 +753,16 @@ class _MacroRing extends StatelessWidget {
     return Column(
       children: [
         CircularPercentIndicator(
-          radius: 40,
+          radius: 42,
           lineWidth: 8,
           percent: percent.clamp(0.0, 1.0),
           progressColor: color,
-          backgroundColor: Colors.white.withValues(alpha: 0.1),
+          backgroundColor: isDark
+              ? Colors.white.withValues(alpha: 0.07)
+              : Colors.black.withValues(alpha: 0.06),
           circularStrokeCap: CircularStrokeCap.round,
+          animation: true,
+          animationDuration: 800,
           center: Text(
             '${valueG.toInt()}g',
             style: TextStyle(
@@ -636,8 +776,9 @@ class _MacroRing extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: isDark ? Colors.white70 : Colors.black54,
+            color: isDark ? Colors.white60 : Colors.black54,
             fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -645,16 +786,15 @@ class _MacroRing extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────
-//  Streak Calendar (Problem 6)
-// ──────────────────────────────────────────────
+// ─────────────────────────────────────────
+//  Streak Calendar
+// ─────────────────────────────────────────
 class _StreakCalendarCard extends StatelessWidget {
   const _StreakCalendarCard();
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const purple = Color(0xFF5B3FE8);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -667,31 +807,51 @@ class _StreakCalendarCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [const Color(0xFFFFF9C4).withValues(alpha: 0.4), const Color(0xFFFFF9C4).withValues(alpha: 0.2)]
-                  : [purple.withValues(alpha: 0.08), purple.withValues(alpha: 0.04)],
+                  ? [
+                      const Color(0xFF0F2014).withValues(alpha: 0.85),
+                      const Color(0xFF071209).withValues(alpha: 0.90),
+                    ]
+                  : [
+                      _purple.withValues(alpha: 0.06),
+                      _purple.withValues(alpha: 0.03),
+                    ],
             ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.3) : purple.withValues(alpha: 0.35),
-              width: 1.5,
+              color: isDark ? _lime.withValues(alpha: 0.18) : _purple.withValues(alpha: 0.25),
+              width: 1.2,
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Workout Calendar',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: isDark ? Colors.white : Colors.black87,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
+              Row(
+                children: [
+                  if (isDark)
+                    Container(
+                      width: 3,
+                      height: 16,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: _lime,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  Text(
+                    'Workout Calendar',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
                 'Completed workout days',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7),
+                  color: isDark ? Colors.white.withValues(alpha: 0.55) : Colors.black45,
                   letterSpacing: -0.3,
                 ),
               ),
@@ -711,9 +871,8 @@ class _StreakCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const purple = Color(0xFF5B3FE8);
-    final accentColor = isDark ? const Color(0xFF4CAF50) : purple;
-    final todayColor = isDark ? const Color(0xFFCCFF00) : purple;
+    final accentColor = isDark ? _emerald : _purple;
+    final todayColor = isDark ? _lime : _purple;
 
     final ctrl = context.watch<StatsController>();
     final completedDates = ctrl.completedWorkoutDates;
@@ -733,29 +892,46 @@ class _StreakCalendar extends StatelessWidget {
         formatButtonVisible: false,
         titleTextStyle: TextStyle(
           color: isDark ? Colors.white : Colors.black87,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Montserrat',
         ),
-        leftChevronIcon: Icon(Icons.chevron_left, color: isDark ? Colors.white70 : Colors.black54),
-        rightChevronIcon: Icon(Icons.chevron_right, color: isDark ? Colors.white70 : Colors.black54),
+        leftChevronIcon: Icon(Icons.chevron_left, color: isDark ? _lime.withValues(alpha: 0.8) : Colors.black54),
+        rightChevronIcon: Icon(Icons.chevron_right, color: isDark ? _lime.withValues(alpha: 0.8) : Colors.black54),
       ),
       daysOfWeekVisible: true,
       calendarStyle: CalendarStyle(
-        todayDecoration: BoxDecoration(color: todayColor, shape: BoxShape.circle),
+        todayDecoration: BoxDecoration(
+          color: todayColor,
+          shape: BoxShape.circle,
+          boxShadow: isDark
+              ? [BoxShadow(color: _lime.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1)]
+              : [],
+        ),
         markerDecoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
-        defaultTextStyle: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        selectedDecoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
+        defaultTextStyle: TextStyle(color: isDark ? Colors.white : Colors.black87, fontFamily: 'Montserrat'),
         weekendTextStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-        todayTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        todayTextStyle: TextStyle(
+          color: isDark ? Colors.black : Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
         outsideDaysVisible: false,
       ),
       daysOfWeekStyle: DaysOfWeekStyle(
-        weekdayStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 11),
-        weekendStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 11),
+        weekdayStyle: TextStyle(
+          color: isDark ? _lime.withValues(alpha: 0.6) : Colors.black45,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+        weekendStyle: TextStyle(
+          color: isDark ? Colors.white38 : Colors.black38,
+          fontSize: 11,
+        ),
       ),
       eventLoader: (day) {
-        // Mark days where a workout was completed
         final normalized = DateTime(day.year, day.month, day.day);
         final hasWorkout = completedDates.any((d) =>
-          d.year == normalized.year && d.month == normalized.month && d.day == normalized.day);
+            d.year == normalized.year && d.month == normalized.month && d.day == normalized.day);
         return hasWorkout ? [true] : [];
       },
     );

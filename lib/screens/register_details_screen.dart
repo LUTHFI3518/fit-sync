@@ -1,7 +1,8 @@
 // register_details_screen.dart
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import '../services/user_service.dart';
+import 'package:provider/provider.dart';
+import '../controllers/profile_controller.dart';
 import '../widgets/auth_widgets.dart';
 import 'home_page.dart';
 
@@ -68,9 +69,7 @@ class _RegisterDetailsScreenState extends State<RegisterDetailsScreen> {
     setState(() => _error = null);
 
     try {
-      final userService = UserService();
-
-      await userService.updateProfile({
+      final Map<String, dynamic> updateData = {
         "age": widget.age,
         "height": widget.height,
         "weight": widget.weight,
@@ -82,7 +81,15 @@ class _RegisterDetailsScreenState extends State<RegisterDetailsScreen> {
         "hasKneePain": _hasKneePain,
         "phone": widget.phone,
         "gender": widget.gender,
-      });
+      };
+
+      if (widget.avatarPath != null) {
+        updateData['avatarUrl'] = widget.avatarPath;
+      }
+
+      if (mounted) {
+        await context.read<ProfileController>().updateProfile(updateData);
+      }
 
       if (!mounted) return;
 
