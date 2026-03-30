@@ -1,73 +1,59 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
 class BarbellCurlsHeavyLogic extends BaseExercise {
-  bool _isDown = false;
+  bool _isUp = false;
 
   BarbellCurlsHeavyLogic(super.targetReps) {
-    feedback = "Barbell Curls";
+    feedback = "Grip barbell, stand with back straight";
   }
 
   @override
   void processPose(Pose pose) {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
-    final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
-
+    final lElbow    = pose.landmarks[PoseLandmarkType.leftElbow];
+    final lWrist    = pose.landmarks[PoseLandmarkType.leftWrist];
+    final lHip      = pose.landmarks[PoseLandmarkType.leftHip];
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
-    final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
-    final rWrist = pose.landmarks[PoseLandmarkType.rightWrist];
+    final rElbow    = pose.landmarks[PoseLandmarkType.rightElbow];
+    final rWrist    = pose.landmarks[PoseLandmarkType.rightWrist];
 
-    final leftOk = _conf(lShoulder, lElbow, lWrist);
-    final rightOk = _conf(rShoulder, rElbow, rWrist);
+    final leftOk  = conf([lShoulder, lElbow, lWrist]);
+    final rightOk = conf([rShoulder, rElbow, rWrist]);
+    final torsoOk = conf([lShoulder, lHip]);
 
     if (!leftOk && !rightOk) {
-      feedback = "Upper body not visible";
+      feedback = "Show arms clearly in frame";
       return;
     }
 
-    double angle = 0;
-    if (leftOk && rightOk) {
-      angle = (_angle(lShoulder!, lElbow!, lWrist!) + _angle(rShoulder!, rElbow!, rWrist!)) / 2;
-    } else if (leftOk) {
-      angle = _angle(lShoulder!, lElbow!, lWrist!);
-    } else {
-      angle = _angle(rShoulder!, rElbow!, rWrist!);
-    }
-
-    if (!_isDown && angle > 150) {
-      feedback = "Pull \u2191";
-    }
-
-    if (angle < 50) {
-      if (!_isDown) {
-        _isDown = true;
-        feedback = "Release \u2193";
+    // No back-swing: torso must stay vertical
+    if (torsoOk) {
+      final backLean = lHip!.y - lShoulder!.y;
+      if (backLean < 100) {
+        feedback = "Stand tall — no leaning back!";
+        return;
       }
     }
 
-    if (_isDown && angle > 150) {
-      reps++;
-      _isDown = false;
-      feedback = "Rep $reps \ud83d\udcaa";
+    double elbowAngle;
+    if (leftOk && rightOk) {
+      elbowAngle = (angle(lShoulder!, lElbow!, lWrist!) +
+                    angle(rShoulder!, rElbow!, rWrist!)) / 2;
+    } else if (leftOk) {
+      elbowAngle = angle(lShoulder!, lElbow!, lWrist!);
+    } else {
+      elbowAngle = angle(rShoulder!, rElbow!, rWrist!);
     }
 
-  }
+    if (!_isUp && elbowAngle > 155) feedback = "Curl barbell up ↑";
 
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
+    if (elbowAngle < 50) {
+      if (!_isUp) { _isUp = true; feedback = "Lower with control ↓"; }
+    }
 
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
+    if (_isUp && elbowAngle > 155) {
+      if (countRep()) { _isUp = false; feedback = "Rep $reps 💪"; }
+    }
   }
 }

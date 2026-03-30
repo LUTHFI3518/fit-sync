@@ -1,68 +1,41 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
+/// Handstand Push-Ups (Wall Assisted): track depth and extension.
 class HandstandPushUpsLogic extends BaseExercise {
   bool _isDown = false;
 
   HandstandPushUpsLogic(super.targetReps) {
-    feedback = "Get into handstand position";
+    feedback = "Handstand against wall, lower head ↓";
   }
 
   @override
   void processPose(Pose pose) {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
     final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
-    final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
+    final lWr = pose.landmarks[PoseLandmarkType.leftWrist];
 
-    final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
-    final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
-    final rWrist = pose.landmarks[PoseLandmarkType.rightWrist];
-
-    final leftOk = _conf(lShoulder, lElbow, lWrist);
-    final rightOk = _conf(rShoulder, rElbow, rWrist);
-
-    if (!leftOk && !rightOk) {
-      feedback = "Ensure upper body is visible";
+    if (!conf([lShoulder, lElbow, lWr])) {
+      feedback = "Show arm profile clearly";
       return;
     }
 
-    double angle = 0;
-    if (leftOk && rightOk) {
-      angle = (_angle(lShoulder!, lElbow!, lWrist!) + _angle(rShoulder!, rElbow!, rWrist!)) / 2;
-    } else if (leftOk) {
-      angle = _angle(lShoulder!, lElbow!, lWrist!);
-    } else {
-      angle = _angle(rShoulder!, rElbow!, rWrist!);
+    final elbowAngle = angle(lShoulder!, lElbow!, lWr!);
+
+    if (!_isDown && elbowAngle > 155) feedback = "Lower head controlled ↓";
+
+    if (elbowAngle < 90) {
+      if (!_isDown) {
+        _isDown = true;
+        feedback = "Push back up ↑";
+      }
     }
 
-    if (!_isDown && angle < 90) {
-      _isDown = true;
-      feedback = "Push up \u2191";
+    if (_isDown && elbowAngle > 160) {
+      if (countRep()) {
+        _isDown = false;
+        feedback = "Rep $reps 💪";
+      }
     }
-
-    if (_isDown && angle > 150) {
-      reps++;
-      _isDown = false;
-      feedback = "Insane form! Rep $reps \ud83d\udcaa";
-    } else if (!_isDown && angle > 150) {
-      feedback = "Lower yourself cleanly \u2193";
-    }
-  }
-
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
-
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 0;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
   }
 }

@@ -1,10 +1,6 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
-/// Wall Sit — isometric hold measured in seconds.
-/// The knee angle (hip→knee→ankle) must stay between 80°–100° (roughly 90°).
-/// `reps` counts elapsed hold seconds; `targetReps` = target seconds.
 class WallSitLogic extends BaseExercise {
   DateTime? _holdStart;
   int _lastReportedSeconds = 0;
@@ -22,26 +18,26 @@ class WallSitLogic extends BaseExercise {
     final rKnee = pose.landmarks[PoseLandmarkType.rightKnee];
     final rAnkle = pose.landmarks[PoseLandmarkType.rightAnkle];
 
-    final leftOk = _conf(lHip, lKnee, lAnkle);
-    final rightOk = _conf(rHip, rKnee, rAnkle);
+    final leftOk = conf([lHip, lKnee, lAnkle]);
+    final rightOk = conf([rHip, rKnee, rAnkle]);
 
     if (!leftOk && !rightOk) {
       _holdStart = null;
-      feedback = "Position yourself in frame";
+      feedback = "Position yourself in frame (side view)";
       return;
     }
 
-    double angle;
+    double kneeAngle;
     if (leftOk && rightOk) {
-      angle = (_dot(lHip!, lKnee!, lAnkle!) + _dot(rHip!, rKnee!, rAnkle!)) / 2;
+      kneeAngle = (angle(lHip!, lKnee!, lAnkle!) + angle(rHip!, rKnee!, rAnkle!)) / 2;
     } else if (leftOk) {
-      angle = _dot(lHip!, lKnee!, lAnkle!);
+      kneeAngle = angle(lHip!, lKnee!, lAnkle!);
     } else {
-      angle = _dot(rHip!, rKnee!, rAnkle!);
+      kneeAngle = angle(rHip!, rKnee!, rAnkle!);
     }
 
-    // Valid wall-sit position: knee between 75° and 105°
-    if (angle >= 75 && angle <= 105) {
+    // Valid wall-sit position: knee between 80° and 100° (90° is perfect)
+    if (kneeAngle >= 80 && kneeAngle <= 100) {
       _holdStart ??= DateTime.now();
       final elapsed = DateTime.now().difference(_holdStart!).inSeconds;
 
@@ -50,39 +46,19 @@ class WallSitLogic extends BaseExercise {
         reps = elapsed;
         final remaining = targetReps - elapsed;
         if (remaining > 0) {
-          feedback = "Hold! ${remaining}s to go \ud83d\udd25";
+          feedback = "Hold! ${remaining}s to go 🔥";
         } else {
-          feedback = "Done! Great wall sit! \u2705";
+          feedback = "Done! Great wall sit! ✅";
         }
       }
     } else {
       _holdStart = null;
       _lastReportedSeconds = 0;
-      if (angle < 75) {
+      if (kneeAngle < 80) {
         feedback = "Too low — rise slightly";
       } else {
-        feedback = "Bend knees more \u2193";
+        feedback = "Bend your knees more ↓";
       }
     }
-  }
-
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null &&
-      b != null &&
-      c != null &&
-      a.likelihood > 0.5 &&
-      b.likelihood > 0.5 &&
-      c.likelihood > 0.5;
-
-  double _dot(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
   }
 }

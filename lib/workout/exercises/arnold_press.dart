@@ -1,61 +1,47 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
+/// Arnold Press: seated/standing dumbbell overhead press with rotation.
+/// Track both arms reaching full extension overhead.
 class ArnoldPressLogic extends BaseExercise {
-  bool _isDown = false;
+  bool _isUp = false;
 
   ArnoldPressLogic(super.targetReps) {
-    feedback = "Arnold Press";
+    feedback = "Dumbbells at shoulder level, palms in";
   }
 
   @override
   void processPose(Pose pose) {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
-    final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
+    final lElbow    = pose.landmarks[PoseLandmarkType.leftElbow];
+    final lWrist    = pose.landmarks[PoseLandmarkType.leftWrist];
+    final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
+    final rElbow    = pose.landmarks[PoseLandmarkType.rightElbow];
+    final rWrist    = pose.landmarks[PoseLandmarkType.rightWrist];
 
-    final leftOk = _conf(lShoulder, lElbow, lWrist);
-
-    if (!leftOk) {
-      feedback = "Make sure arms are in frame";
+    if (!conf([lShoulder, lElbow, lWrist]) || !conf([rShoulder, rElbow, rWrist])) {
+      feedback = "Both arms must be visible";
       return;
     }
 
-    final angle = _angle(lShoulder!, lElbow!, lWrist!);
+    final lA = angle(lShoulder!, lElbow!, lWrist!);
+    final rA = angle(rShoulder!, rElbow!, rWrist!);
+    final avgAngle = (lA + rA) / 2;
 
-    if (!_isDown && angle < 90) {
-      feedback = "Press up \u2191";
+    // Fully pressed = both arms extended overhead (> 165°)
+    // Both wrists above shoulders
+    final armsUp = lWrist.y < lShoulder.y && rWrist.y < rShoulder.y;
+
+    if (!_isUp && armsUp && avgAngle > 165) {
+      _isUp = true;
+      feedback = "Lower with rotation ↓";
     }
 
-    if (angle > 150) {
-      if (!_isDown) {
-        _isDown = true;
-        feedback = "Lower down \u2193";
-      }
+    // Starting position: elbows bent ~90°, wrists at shoulder level
+    if (_isUp && avgAngle < 100 && !armsUp) {
+      if (countRep()) { _isUp = false; feedback = "Rep $reps 💪"; }
     }
 
-    if (_isDown && angle < 90) {
-      reps++;
-      _isDown = false;
-      feedback = "Rep $reps \ud83d\udcaa";
-    }
-
-  }
-
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
-
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
+    if (!_isUp) feedback = "Press overhead fully ↑";
   }
 }

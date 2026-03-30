@@ -1,73 +1,53 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
 class PullUpsLogic extends BaseExercise {
-  bool _isDown = false;
+  bool _isUp = false;
 
   PullUpsLogic(super.targetReps) {
-    feedback = "Pull-ups";
+    feedback = "Hang from bar, arms fully extended";
   }
 
   @override
   void processPose(Pose pose) {
+    final lWrist    = pose.landmarks[PoseLandmarkType.leftWrist];
+    final lElbow    = pose.landmarks[PoseLandmarkType.leftElbow];
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
-    final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
-
+    final rWrist    = pose.landmarks[PoseLandmarkType.rightWrist];
+    final rElbow    = pose.landmarks[PoseLandmarkType.rightElbow];
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
-    final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
-    final rWrist = pose.landmarks[PoseLandmarkType.rightWrist];
 
-    final leftOk = _conf(lShoulder, lElbow, lWrist);
-    final rightOk = _conf(rShoulder, rElbow, rWrist);
-
-    if (!leftOk && !rightOk) {
-      feedback = "Upper body not visible";
+    if (!conf([lWrist, lElbow, lShoulder]) || !conf([rWrist, rElbow, rShoulder])) {
+      feedback = "Both arms must be visible on bar";
       return;
     }
 
-    double angle = 0;
-    if (leftOk && rightOk) {
-      angle = (_angle(lShoulder!, lElbow!, lWrist!) + _angle(rShoulder!, rElbow!, rWrist!)) / 2;
-    } else if (leftOk) {
-      angle = _angle(lShoulder!, lElbow!, lWrist!);
-    } else {
-      angle = _angle(rShoulder!, rElbow!, rWrist!);
+    // Grip check: wrists must be above elbows (hanging from bar)
+    if (lWrist!.y > lElbow!.y || rWrist!.y > rElbow!.y) {
+      feedback = "Wrists must be above — grip the bar!";
+      return;
     }
 
-    if (!_isDown && angle > 150) {
-      feedback = "Pull \u2191";
+    final lA = angle(lWrist, lElbow, lShoulder!);
+    final rA = angle(rWrist, rElbow, rShoulder!);
+    final avgAngle = (lA + rA) / 2;
+
+    // Top of pull-up: chin above bar — chin (nose landmark) must be above wrists
+    final nose = pose.landmarks[PoseLandmarkType.nose];
+    final chinUp = nose != null && nose.likelihood > BaseExercise.kConf && nose.y < lWrist.y;
+
+    if (!_isUp && chinUp) {
+      _isUp = true;
+      feedback = "Lower fully — arms straight ↓";
     }
 
-    if (angle < 70) {
-      if (!_isDown) {
-        _isDown = true;
-        feedback = "Release \u2193";
-      }
+    // Bottom: arms fully extended (close to 180°)
+    if (_isUp && avgAngle > 160) {
+      if (countRep()) { _isUp = false; feedback = "Rep $reps 💪"; }
     }
 
-    if (_isDown && angle > 150) {
-      reps++;
-      _isDown = false;
-      feedback = "Rep $reps \ud83d\udcaa";
+    if (!_isUp && !chinUp) {
+      feedback = "Pull yourself up — chin over bar ↑";
     }
-
-  }
-
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
-
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
   }
 }

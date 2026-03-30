@@ -19,7 +19,7 @@ import '../exercises/incline_pushups.dart';
 import '../exercises/leg_rises.dart';
 import '../exercises/pike_pushups.dart';
 import '../exercises/side_plank.dart';
-import '../exercises/ticeps_dips.dart';
+import '../exercises/triceps_dips.dart';
 import '../exercises/diamond_push_ups.dart';
 import '../exercises/archer_push_ups.dart';
 import '../exercises/close_grip_push_ups.dart';
@@ -159,6 +159,8 @@ class ExerciseEngine {
         exercise = SidePlankLogic(targetReps);
         break;
 
+      case "triceps dips":
+      case "triceps_dips":
       case "ticeps_dips":
         exercise = TicepsDipsLogic(targetReps);
         break;
@@ -309,9 +311,7 @@ class ExerciseEngine {
         break;
 
       default:
-        throw Exception(
-          "Exercise '$exerciseName' not supported.",
-        );
+        throw Exception("Exercise '$exerciseName' not supported.");
     }
   }
 

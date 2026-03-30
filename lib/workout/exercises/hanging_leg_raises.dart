@@ -1,61 +1,56 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
+/// Hanging Leg Raises: legs straight, lifted to horizontal or above.
 class HangingLegRaisesLogic extends BaseExercise {
-  bool _isDown = false;
+  bool _isUp = false;
 
   HangingLegRaisesLogic(super.targetReps) {
-    feedback = "Leg Raises";
+    feedback = "Hang from bar, keep legs straight";
   }
 
   @override
   void processPose(Pose pose) {
+    final lWrist    = pose.landmarks[PoseLandmarkType.leftWrist];
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lHip = pose.landmarks[PoseLandmarkType.leftHip];
-    final lAnkle = pose.landmarks[PoseLandmarkType.leftAnkle];
+    final lHip      = pose.landmarks[PoseLandmarkType.leftHip];
+    final lAnkle    = pose.landmarks[PoseLandmarkType.leftAnkle];
 
-    final conf1 = _conf(lShoulder, lHip, lAnkle);
-
-    if (!conf1) {
-      feedback = "Show side profile";
+    if (!conf([lWrist, lShoulder, lHip, lAnkle])) {
+      feedback = "Show full body — wrists to ankles";
       return;
     }
 
-    double angle = _angle(lShoulder!, lHip!, lAnkle!);
-
-    if (!_isDown && angle > 150) {
-      feedback = "Raise legs \u2191";
+    // Grip check
+    if (lWrist!.y > lShoulder!.y) {
+      feedback = "Hands must be above — hang from bar!";
+      return;
     }
 
-    if (angle < 100) {
-      if (!_isDown) {
-        _isDown = true;
-        feedback = "Lower legs \u2193";
+    // Leg straightness: knee must not be bent (hip-to-ankle angle via hip)
+    final lKnee = pose.landmarks[PoseLandmarkType.leftKnee];
+    if (conf([lHip, lKnee, lAnkle])) {
+      final kneeAngle = angle(lHip!, lKnee!, lAnkle!);
+      if (kneeAngle < 155) {
+        feedback = "Keep legs straight!";
+        return;
       }
     }
 
-    if (_isDown && angle > 150) {
-      reps++;
-      _isDown = false;
-      feedback = "Rep $reps \ud83d\udcaa";
+    final hipAngle = angle(lShoulder, lHip!, lAnkle!);
+
+    // Legs raised = hip angle < 90° (horizontal or above)
+    if (!_isUp && hipAngle < 95) {
+      _isUp = true;
+      feedback = "Lower legs slowly ↓";
     }
 
-  }
+    if (_isUp && hipAngle > 165) {
+      if (countRep()) { _isUp = false; feedback = "Rep $reps 💪"; }
+    }
 
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
-
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
+    if (!_isUp && hipAngle > 165) {
+      feedback = "Raise legs straight up ↑";
+    }
   }
 }
