@@ -53,7 +53,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
                   value: _notificationsEnabled,
                   activeThumbColor: isDark ? Colors.black : Colors.white,
                   activeTrackColor: isDark
-                      ? const Color(0xFFCCFF00)
+                      ? const Color(0xFFAAFF57)
                       : const Color(0xFF5B3FE8),
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: Colors.white24,

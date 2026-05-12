@@ -1,61 +1,54 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
+/// Russian Twists: seated, torso rotates side to side.
+/// Detect by tracking relative shoulder vs hip rotation.
 class RussianTwistsLogic extends BaseExercise {
-  bool _isDown = false;
+  int _state = 0; // 0=center, 1=right done, full rep = left done after right
 
   RussianTwistsLogic(super.targetReps) {
-    feedback = "Russian Twists";
+    feedback = "Sit at 45°, lean back slightly";
   }
 
   @override
   void processPose(Pose pose) {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lHip = pose.landmarks[PoseLandmarkType.leftHip];
-    final lKnee = pose.landmarks[PoseLandmarkType.leftKnee];
+    final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
+    final lHip      = pose.landmarks[PoseLandmarkType.leftHip];
+    final rHip      = pose.landmarks[PoseLandmarkType.rightHip];
 
-    final conf1 = _conf(lShoulder, lHip, lKnee);
-
-    if (!conf1) {
-      feedback = "Show side profile";
+    if (!conf([lShoulder, rShoulder, lHip, rHip])) {
+      feedback = "Show torso from front";
       return;
     }
 
-    double angle = _angle(lShoulder!, lHip!, lKnee!);
+    // Rotation is detected by the horizontal offset of shoulders relative to hips
+    final shoulderMidX = (lShoulder!.x + rShoulder!.x) / 2;
+    final hipMidX      = (lHip!.x + rHip!.x) / 2;
+    final lShoulderX   = lShoulder.x;
+    final rShoulderX   = rShoulder.x;
 
-    if (!_isDown && angle > 150) {
-      feedback = "Raise legs \u2191";
-    }
+    // Measure shoulder spread vs hip spread to detect rotation
+    final shoulderWidth = (rShoulderX - lShoulderX).abs();
 
-    if (angle < 100) {
-      if (!_isDown) {
-        _isDown = true;
-        feedback = "Lower legs \u2193";
+    // Need significant twist: shoulder mid offset must be > 15% of shoulder width
+    final isTwistedRight = (shoulderMidX - hipMidX) > shoulderWidth * 0.15;
+    final isTwistedLeft  = (hipMidX - shoulderMidX) > shoulderWidth * 0.15;
+
+    if (_state == 0) {
+      if (isTwistedRight) {
+        _state = 1;
+        feedback = "Now twist left ←";
+      } else if (isTwistedLeft) {
+        _state = -1;
+        feedback = "Now twist right →";
+      } else {
+        feedback = "Rotate further side to side";
       }
+    } else if (_state == 1 && isTwistedLeft) {
+      if (countRep()) { _state = 0; feedback = "Rep $reps 💪"; }
+    } else if (_state == -1 && isTwistedRight) {
+      if (countRep()) { _state = 0; feedback = "Rep $reps 💪"; }
     }
-
-    if (_isDown && angle > 150) {
-      reps++;
-      _isDown = false;
-      feedback = "Rep $reps \ud83d\udcaa";
-    }
-
-  }
-
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
-
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
   }
 }

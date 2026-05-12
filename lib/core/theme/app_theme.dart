@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 const Color kLimeAccent = Color(0xFFCCFF00);
+const Color kLimeAccentBright = Color(0xFFAAFF57);
+const Color kDarkForestGreen = Color(0xFF0A1A0D);
+const Color kDarkCardGreen = Color(0xFF0F2014);
+const Color kDarkEmerald = Color(0xFF1A3A21);
 
 // ── Light mode palette (purple + lime)
 const Color kLightPrimary = Color(0xFF7C6AF6); // medium purple
@@ -94,11 +98,22 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: 'Montserrat',
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: kLimeAccent,
+      colorScheme: const ColorScheme(
         brightness: Brightness.dark,
+        primary: kLimeAccentBright,
+        onPrimary: Colors.black,
+        primaryContainer: kDarkEmerald,
+        onPrimaryContainer: kLimeAccentBright,
+        secondary: kLimeAccent,
+        onSecondary: Colors.black,
+        secondaryContainer: Color(0xFF1A3A21),
+        onSecondaryContainer: kLimeAccentBright,
+        surface: kDarkCardGreen,
+        onSurface: Colors.white,
+        error: Color(0xFFFF4757),
+        onError: Colors.white,
       ),
-      scaffoldBackgroundColor: Colors.black,
+      scaffoldBackgroundColor: kDarkForestGreen,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -107,6 +122,7 @@ class AppTheme {
           color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.w600,
+          fontFamily: 'Montserrat',
         ),
       ),
       textTheme: const TextTheme(
@@ -129,50 +145,59 @@ class AppTheme {
         hintStyle: const TextStyle(color: Colors.white54),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(30)),
-          borderSide: BorderSide(color: kLimeAccent, width: 1.5),
+          borderSide: BorderSide(color: kLimeAccentBright, width: 1.5),
         ),
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1A1A1A),
+        color: kDarkCardGreen,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: kLimeAccentBright.withValues(alpha: 0.08),
+            width: 1,
+          ),
+        ),
       ),
     );
   }
 
-  // Light mode background gradient — soft lavender (matches reference design)
+  // Light mode background gradient
   static BoxDecoration getLightBackgroundDecoration() {
     return const BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xFFEFEBFF), // lavender
-          Color(0xFFE8E2FF), // deeper lavender
-          Color(0xFFF0ECFF), // soft lavender
+          Color(0xFFEFEBFF),
+          Color(0xFFE8E2FF),
+          Color(0xFFF0ECFF),
         ],
         stops: [0.0, 0.5, 1.0],
       ),
     );
   }
 
-  // Dark mode background gradient
+  // Dark mode background — deep forest green
   static BoxDecoration getDarkBackgroundDecoration() {
     return const BoxDecoration(
-      gradient: RadialGradient(
-        center: Alignment(-0.6, -0.8),
-        radius: 1.4,
-        colors: [Color(0xFF0D2614), Color(0xFF004D40), Color(0xFF00100A)],
-        stops: [0.0, 0.6, 1.0],
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF071209),
+          Color(0xFF0A1A0D),
+          Color(0xFF051008),
+        ],
+        stops: [0.0, 0.55, 1.0],
       ),
     );
   }
 
-  // Get text color based on theme
   static Color getTextColor(BuildContext context, {double opacity = 1.0}) {
     final brightness = Theme.of(context).brightness;
     return brightness == Brightness.dark
@@ -180,21 +205,18 @@ class AppTheme {
         : kLightTextPri.withValues(alpha: opacity);
   }
 
-  // Get background color based on theme
   static Color getBackgroundColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? Colors.black : kLightBackground;
+    return brightness == Brightness.dark ? kDarkForestGreen : kLightBackground;
   }
 
-  // Get card color based on theme
   static Color getCardColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? const Color(0xFF1A1A1A) : kLightCard;
+    return brightness == Brightness.dark ? kDarkCardGreen : kLightCard;
   }
 
-  // Get primary accent color based on theme
   static Color getPrimaryColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? kLimeAccent : kLightPrimary;
+    return brightness == Brightness.dark ? kLimeAccentBright : kLightPrimary;
   }
 }

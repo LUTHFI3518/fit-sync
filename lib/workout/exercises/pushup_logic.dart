@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
@@ -12,72 +11,61 @@ class PushUpLogic extends BaseExercise {
   @override
   void processPose(Pose pose) {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-    final lElbow = pose.landmarks[PoseLandmarkType.leftElbow];
-    final lWrist = pose.landmarks[PoseLandmarkType.leftWrist];
-    final lHip = pose.landmarks[PoseLandmarkType.leftHip];
-    final lAnkle = pose.landmarks[PoseLandmarkType.leftAnkle];
+    final lElbow    = pose.landmarks[PoseLandmarkType.leftElbow];
+    final lWrist    = pose.landmarks[PoseLandmarkType.leftWrist];
+    final lHip      = pose.landmarks[PoseLandmarkType.leftHip];
+    final lAnkle    = pose.landmarks[PoseLandmarkType.leftAnkle];
 
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
-    final rElbow = pose.landmarks[PoseLandmarkType.rightElbow];
-    final rWrist = pose.landmarks[PoseLandmarkType.rightWrist];
+    final rElbow    = pose.landmarks[PoseLandmarkType.rightElbow];
+    final rWrist    = pose.landmarks[PoseLandmarkType.rightWrist];
 
-    final leftOk = _conf(lShoulder, lElbow, lWrist);
-    final rightOk = _conf(rShoulder, rElbow, rWrist);
-    final backOk = _conf(lShoulder, lHip, lAnkle);
+    final leftArmOk  = conf([lShoulder, lElbow, lWrist]);
+    final rightArmOk = conf([rShoulder, rElbow, rWrist]);
+    final backOk     = conf([lShoulder, lHip, lAnkle]);
 
-    if (!leftOk && !rightOk) {
-      feedback = "Make sure your full body is in frame";
+    if (!leftArmOk && !rightArmOk) {
+      feedback = "Show your full upper body in frame";
       return;
     }
 
+    // 1. Back-straightness check — must be straight, not sagging/piking
     if (backOk) {
-      final backAngle = _angle(lShoulder!, lHip!, lAnkle!);
-      if (backAngle < 150) {
+      final backAngle = angle(lShoulder!, lHip!, lAnkle!);
+      if (backAngle < 155) {
         feedback = "Keep your back straight!";
         return;
       }
     }
 
-    double angle = 0;
-    if (leftOk && rightOk) {
-      angle = (_angle(lShoulder!, lElbow!, lWrist!) + _angle(rShoulder!, rElbow!, rWrist!)) / 2;
-    } else if (leftOk) {
-      angle = _angle(lShoulder!, lElbow!, lWrist!);
+    // 2. Compute elbow angle
+    double elbowAngle = 0;
+    if (leftArmOk && rightArmOk) {
+      elbowAngle = (angle(lShoulder!, lElbow!, lWrist!) +
+                    angle(rShoulder!, rElbow!, rWrist!)) / 2;
+    } else if (leftArmOk) {
+      elbowAngle = angle(lShoulder!, lElbow!, lWrist!);
     } else {
-      angle = _angle(rShoulder!, rElbow!, rWrist!);
+      elbowAngle = angle(rShoulder!, rElbow!, rWrist!);
     }
 
-    if (!_isDown && angle > 155) {
-      feedback = "Go down \u2193";
+    // 3. State machine with strict thresholds
+    if (!_isDown && elbowAngle > 160) {
+      feedback = "Go down ↓";
     }
 
-    if (angle < 85) {
+    if (elbowAngle < 80) {
       if (!_isDown) {
         _isDown = true;
-        feedback = "Push up \u2191";
+        feedback = "Push up ↑";
       }
     }
 
-    if (_isDown && angle > 155) {
-      reps++;
-      _isDown = false;
-      feedback = "Great! Rep $reps \ud83d\udcaa";
+    if (_isDown && elbowAngle > 160) {
+      if (countRep()) {
+        _isDown = false;
+        feedback = "Great! Rep $reps 💪";
+      }
     }
-  }
-
-  bool _conf(PoseLandmark? a, PoseLandmark? b, PoseLandmark? c) =>
-      a != null && b != null && c != null &&
-      a.likelihood > 0.5 && b.likelihood > 0.5 && c.likelihood > 0.5;
-
-  double _angle(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
-    final v1x = a.x - b.x;
-    final v1y = a.y - b.y;
-    final v2x = c.x - b.x;
-    final v2y = c.y - b.y;
-    final dot = v1x * v2x + v1y * v2y;
-    final mag1 = sqrt(v1x * v1x + v1y * v1y);
-    final mag2 = sqrt(v2x * v2x + v2y * v2y);
-    if (mag1 == 0 || mag2 == 0) return 180;
-    return acos((dot / (mag1 * mag2)).clamp(-1.0, 1.0)) * 180 / pi;
   }
 }

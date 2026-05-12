@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/profile_controller.dart';
 import '../controllers/workout_controller.dart';
+import '../controllers/stats_controller.dart';
 import '../widgets/auth_background.dart';
 import 'ai_agent_page.dart';
 import 'settings_page.dart';
@@ -257,6 +258,8 @@ class _HomeShellState extends State<HomeShell> with TickerProviderStateMixin {
     }
 
     _buildDaysFromBackend(workoutCtrl);
+    final isAbsencePending = workoutCtrl.isAbsencePending;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
@@ -279,6 +282,7 @@ class _HomeShellState extends State<HomeShell> with TickerProviderStateMixin {
                 shakeAnim: _shakeAnim,
                 onDayTap: _onDayTap,
                 name: name,
+                planLabel: context.read<WorkoutController>().planLabel,
               ),
               // Tab 1 – Progress
               const StatisticsPage(),
@@ -289,6 +293,210 @@ class _HomeShellState extends State<HomeShell> with TickerProviderStateMixin {
             ],
           ),
 
+          // ── ABSENCE BLOCK OVERLAY ──────────────────────────────────
+          if (isAbsencePending && _tabIndex != 2)
+            Positioned.fill(
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0D2614).withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(
+                              color: const Color(0xFFAAFF57).withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFAAFF57).withValues(alpha: 0.1),
+                                blurRadius: 40,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFAAFF57).withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.health_and_safety_rounded,
+                                  color: const Color(0xFFAAFF57),
+                                  size: 40,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Health Check Required',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'It looks like you\'ve missed some sessions. Before we resume your training journey, please check in with your AI health coach to discuss your absence.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              ElevatedButton(
+                                onPressed: () => setState(() => _tabIndex = 2),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFAAFF57),
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Chat with My Coach',
+                                      style: TextStyle(fontWeight: FontWeight.w800),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward_rounded, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // ── REST & RECOVERY OVERLAY ────────────────────────────────
+          if (workoutCtrl.isPaused && _tabIndex == 0)
+            Positioned.fill(
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Container(
+                    color: Colors.blue.withValues(alpha: 0.15),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(36),
+                            border: Border.all(
+                              color: Colors.blueAccent.withValues(alpha: 0.4),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blueAccent.withValues(alpha: 0.15),
+                                blurRadius: 40,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blueAccent.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.bedtime_rounded,
+                                  color: Colors.blueAccent,
+                                  size: 40,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Rest & Recovery',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Recovery is part of the progress! Your workouts are currently paused, and your streak is safely frozen. Take the time you need to heal.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              ElevatedButton(
+                                onPressed: () => setState(() => _tabIndex = 2),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blueAccent,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 36,
+                                    vertical: 18,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Message My Coach',
+                                      style: TextStyle(fontWeight: FontWeight.w800),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.chat_bubble_rounded, size: 16),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // ── Bottom nav bar
           Positioned(
             left: 0,
@@ -297,8 +505,17 @@ class _HomeShellState extends State<HomeShell> with TickerProviderStateMixin {
             child: _BottomNavBar(
               currentIndex: _tabIndex,
               onChanged: (i) {
+                // If absence is pending, only allow switching to AI tab (index 2)
+                if (isAbsencePending && i != 2) {
+                  return;
+                }
+                
                 if (i == 0 && _tabIndex != 0) {
                   _scrollToCurrentDay();
+                  context.read<WorkoutController>().loadTodayWorkout();
+                }
+                if (i == 1 && _tabIndex != 1) {
+                  context.read<StatsController>().loadAllStats();
                 }
                 setState(() => _tabIndex = i);
               },
@@ -323,6 +540,7 @@ class _JourneyTab extends StatelessWidget {
     required this.shakeAnim,
     required this.onDayTap,
     required this.name,
+    required this.planLabel,
   });
   final List<JourneyDay> days;
   final ScrollController scroll;
@@ -332,6 +550,7 @@ class _JourneyTab extends StatelessWidget {
   final Animation<double> shakeAnim;
   final ValueChanged<JourneyDay> onDayTap;
   final String name;
+  final String planLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -389,9 +608,9 @@ class _JourneyTab extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            'SECTION 1  •  90-Day Journey',
-                            style: TextStyle(
+                          child: Text(
+                            'SECTION 1  •  $planLabel',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 11,
@@ -458,8 +677,8 @@ class _BottomNavBar extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: isDark
                       ? [
-                          Colors.white.withValues(alpha: 0.15),
-                          Colors.white.withValues(alpha: 0.05),
+                          const Color(0xFF0F2014).withValues(alpha: 0.92),
+                          const Color(0xFF071209).withValues(alpha: 0.88),
                         ]
                       : [
                           const Color(0xFF4A2FD4).withValues(alpha: 0.92),
@@ -469,16 +688,16 @@ class _BottomNavBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
+                      ? const Color(0xFFAAFF57).withValues(alpha: 0.22)
                       : Colors.white.withValues(alpha: 0.25),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isDark
-                        ? Colors.black.withValues(alpha: 0.2)
+                        ? const Color(0xFFAAFF57).withValues(alpha: 0.1)
                         : const Color(0xFF5B3FE8).withValues(alpha: 0.4),
-                    blurRadius: 20,
+                    blurRadius: 24,
                     offset: const Offset(0, -4),
                   ),
                 ],
@@ -549,9 +768,9 @@ class _NavItem extends StatelessWidget {
               ? [
                   BoxShadow(
                     color: isDark
-                        ? const Color(0xFFCCFF00).withValues(alpha: 0.35)
+                        ? const Color(0xFFAAFF57).withValues(alpha: 0.45)
                         : Colors.white.withValues(alpha: 0.5),
-                    blurRadius: 12,
+                    blurRadius: 14,
                     spreadRadius: 1,
                   ),
                 ]
@@ -1478,31 +1697,80 @@ class _StartWorkoutSheetState extends State<_StartWorkoutSheet> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Progress pill
+                        // Level pill
                         if (exercises.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: doneCount == exercises.length
-                                  ? const Color(
-                                      0xFF2EA043,
-                                    ).withValues(alpha: 0.9)
-                                  : Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              doneCount == exercises.length
-                                  ? '✅ All done!'
-                                  : '$doneCount / ${exercises.length} done',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: doneCount == exercises.length
+                                      ? const Color(0xFF2EA043).withValues(alpha: 0.9)
+                                      : Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  doneCount == exercises.length
+                                      ? '✅ All done!'
+                                      : '$doneCount / ${exercises.length} done',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              // 🔥 Dynamic Level Badge (Recalculated)
+                              Builder(
+                                builder: (context) {
+                                  final profile = context.watch<ProfileController>().profileData;
+                                  String displayLevel = profile?['currentLevel'] ?? profile?['level'] ?? 'medium';
+                                  bool isRecovery = false;
+
+                                  if (profile?['downgradeUntil'] != null) {
+                                    final today = DateTime.now().toIso8601String().split('T')[0]; // Simple IST approx
+                                    if (today.compareTo(profile!['downgradeUntil']) <= 0) {
+                                      isRecovery = true;
+                                      if (displayLevel == 'hard') displayLevel = 'medium';
+                                      else if (displayLevel == 'medium') displayLevel = 'easy';
+                                    }
+                                  }
+
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isRecovery
+                                          ? Colors.blueAccent.withValues(alpha: 0.2)
+                                          : Colors.white.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isRecovery
+                                            ? Colors.blueAccent.withValues(alpha: 0.5)
+                                            : Colors.white.withValues(alpha: 0.2),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isRecovery ? 'EASY (RECOVERY)' : displayLevel.toUpperCase(),
+                                      style: TextStyle(
+                                        color: isRecovery ? Colors.blueAccent : Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         const SizedBox(height: 12),
 

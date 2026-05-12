@@ -1,13 +1,11 @@
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'base_exercise.dart';
 
-/// Decline Push-Up: feet elevated, hands on floor.
-/// Same arm mechanics as regular push-up but stricter back check.
-class DeclinePushupsLogic extends BaseExercise {
+class TicepsDipsLogic extends BaseExercise {
   bool _isDown = false;
 
-  DeclinePushupsLogic(super.targetReps) {
-    feedback = "Feet on surface, hands on floor";
+  TicepsDipsLogic(super.targetReps) {
+    feedback = "Hands behind on surface, arms straight";
   }
 
   @override
@@ -15,30 +13,25 @@ class DeclinePushupsLogic extends BaseExercise {
     final lShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
     final lElbow    = pose.landmarks[PoseLandmarkType.leftElbow];
     final lWrist    = pose.landmarks[PoseLandmarkType.leftWrist];
-    final lHip      = pose.landmarks[PoseLandmarkType.leftHip];
-    final lAnkle    = pose.landmarks[PoseLandmarkType.leftAnkle];
     final rShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
     final rElbow    = pose.landmarks[PoseLandmarkType.rightElbow];
     final rWrist    = pose.landmarks[PoseLandmarkType.rightWrist];
 
     final leftOk  = conf([lShoulder, lElbow, lWrist]);
     final rightOk = conf([rShoulder, rElbow, rWrist]);
-    final backOk  = conf([lShoulder, lHip, lAnkle]);
 
     if (!leftOk && !rightOk) {
-      feedback = "Show full upper body in frame";
+      feedback = "Show both arms clearly in frame";
       return;
     }
 
-    if (backOk) {
-      final backAngle = angle(lShoulder!, lHip!, lAnkle!);
-      if (backAngle < 155) {
-        feedback = "Keep core tight, back straight!";
-        return;
-      }
+    // Shoulders must stay near or below wrist level (not shrugged up)
+    if (conf([lShoulder, lWrist]) && lShoulder!.y < lWrist!.y - 60) {
+      feedback = "Keep shoulders down, don't shrug!";
+      return;
     }
 
-    double elbowAngle = 0;
+    double elbowAngle;
     if (leftOk && rightOk) {
       elbowAngle = (angle(lShoulder!, lElbow!, lWrist!) +
                     angle(rShoulder!, rElbow!, rWrist!)) / 2;
@@ -48,13 +41,13 @@ class DeclinePushupsLogic extends BaseExercise {
       elbowAngle = angle(rShoulder!, rElbow!, rWrist!);
     }
 
-    if (!_isDown && elbowAngle > 160) feedback = "Lower chest to floor ↓";
+    if (!_isDown && elbowAngle > 155) feedback = "Dip down ↓";
 
     if (elbowAngle < 80) {
-      if (!_isDown) { _isDown = true; feedback = "Push up ↑"; }
+      if (!_isDown) { _isDown = true; feedback = "Push back up ↑"; }
     }
 
-    if (_isDown && elbowAngle > 160) {
+    if (_isDown && elbowAngle > 155) {
       if (countRep()) { _isDown = false; feedback = "Rep $reps 💪"; }
     }
   }
